@@ -49,6 +49,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         id: license.id,
         serial: license.serial,
         assetId: license.assetId,
+        status: license.status,
         title: license.title,
         licenseKind: tier?.title.fa ?? license.licenseKind,
         exclusive: license.exclusive,
@@ -94,6 +95,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     order: {
       id: order.id,
       status: order.status,
+      refundMode: order.refundMode,
+      manualRefundConfirmed: order.manualRefundConfirmed,
+      refundReference: order.refundReference,
+      refundedAt: order.refundedAt,
       /* Itemised so the receipt can show an honest invoice (VAT is 9 % in Iran). */
       subtotal: order.subtotal,
       discount: order.discount,

@@ -17,7 +17,7 @@ export default async function ReturnsPage({ params }: { params: Promise<{ locale
       <PageHero eyebrow={d.footer.support} title={d.footer.returns} />
       <div className="container-x prose-ra pb-20">
         <p>{fa ? "محصولات فیزیکی کالکشن اختصاصی تا ۷ روز پس از تحویل، در صورت سالم بودن و بسته‌بندی اولیه، قابل بازگشت هستند." : "Physical products from the exclusive collection can be returned within 7 days of delivery, if unused and in original packaging."}</p>
-        <p>{fa ? "فایل‌های دیجیتال پترن به دلیل ماهیت‌شان قابل بازگشت نیستند؛ اما اگر مشکلی در فایل وجود داشت، ظرف ۴۸ ساعت رفع یا وجه بازگردانده می‌شود." : "Digital pattern files are non-returnable by nature; however, if a file is faulty we fix it or refund within 48 hours."}</p>
+        <p>{fa ? "فایل‌های دیجیتال پترن به دلیل ماهیت‌شان قابل بازگشت نیستند. اگر فایل مشکل فنی داشته باشد، پشتیبانی آن را بررسی می‌کند و ظرف ۴۸ ساعت برای رفع مشکل یا هماهنگی بازپرداخت اقدام می‌کند. بازپرداخت تأییدشده به‌صورت دستی و خارج از این وب‌سایت، از طریق بانک یا ارائه‌دهندهٔ پرداخت انجام می‌شود؛ این سامانه انتقال وجه خودکار ندارد." : "Digital pattern files are non-returnable by nature. If a file has a technical fault, support will review it and work toward a fix or refund within 48 hours. An approved refund is processed manually outside this website through the bank or payment provider; this site does not transfer refund funds automatically."}</p>
       </div>
     </>
   );

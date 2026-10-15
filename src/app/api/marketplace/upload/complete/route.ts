@@ -98,6 +98,11 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = String(error);
+    if (message.includes("invalid_family")) {
+      await abortUploadSession(session.id).catch(() => undefined);
+      await deletePrefix(`private/staging/${session.id}`).catch(() => undefined);
+      return fail("invalid_family", 409);
+    }
     if (message.includes("file_too_small")) {
       return fail("file_too_small", 400, { minBytes: (error as { minBytes?: number }).minBytes ?? 0 });
     }

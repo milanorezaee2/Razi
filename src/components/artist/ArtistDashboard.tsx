@@ -29,6 +29,7 @@ import { Field, Input, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ErrorState, EmptyState } from "@/components/ui/States";
 import { SESSION_FETCH } from "@/lib/http";
+import { patternStatusMeta } from "@/lib/pattern-status";
 import { href, formatPrice } from "@/lib/utils";
 import type { Artist, Category, Colorway, Pattern, Product, Space } from "@/lib/types";
 
@@ -284,6 +285,20 @@ function ItemGrid({
             <div className="p-3">
               <p className="truncate text-sm font-medium">{title}</p>
               <p className="mt-0.5 text-caption text-foreground-secondary" dir="ltr">{item.sku}</p>
+              {type === "pattern" && (() => {
+                const meta = patternStatusMeta((item as Pattern).status);
+                if (meta.tone === "success") return null;
+                return (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge tone={meta.tone}>{fa ? meta.label.fa : meta.label.en}</Badge>
+                    {(item as Pattern).status === "rejected" && (item as Pattern).rejectionNote ? (
+                      <span className="text-[11px] leading-snug text-foreground-secondary">
+                        {(item as Pattern).rejectionNote}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })()}
               {(() => {
                 const dots =
                   type === "pattern" && "colorways" in item && item.colorways?.length

@@ -22,6 +22,10 @@ const POLICIES: Record<string, { window: number; max: number }> = {
   profile: { window: 5 * 60 * 1000, max: 30 },
   /** Upload: 20 per 5 min */
   upload: { window: 5 * 60 * 1000, max: 20 },
+  /** Public contact-form submissions: five inquiries per hour per IP */
+  contact: { window: 60 * 60 * 1000, max: 5 },
+  /** Newsletter opt-ins: five attempts per hour per IP */
+  newsletter: { window: 60 * 60 * 1000, max: 5 },
   /** Marketplace uploads: chunks are numerous by design (400 parts / 10 min) */
   "marketplace-upload": { window: 10 * 60 * 1000, max: 400 },
   /** Marketplace checkout: 30 order attempts per 15 min */

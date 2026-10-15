@@ -2,7 +2,7 @@ import "server-only";
 import { capabilities, storageProvider, zarinpalMerchantId, stripeSecret, mailProvider, clamavHost } from "./config";
 import { filterAssets, getAssets, getUploadSessions, saveAsset, setAssetStatus, setAssetVisibility, updateAssetTiers, getSettings, saveSettings } from "./assets";
 import { deleteObject } from "./storage";
-import { getOrders, getLicenses, setOrderStatus, refundOrder, fulfillOrder } from "./orders";
+import { getOrders, getLicenses, setOrderStatus, recordManualRefund, fulfillOrder } from "./orders";
 import { listPayouts } from "./payouts";
 import { getOutbox } from "./email";
 import { getPlatformAnalytics } from "./analytics";
@@ -274,7 +274,7 @@ export async function adminOrderDetail(orderId: string) {
 export const adminOps = {
   fulfillOrder,
   setOrderStatus,
-  refundOrder,
+  recordManualRefund,
   listPayouts,
   getOutbox,
 };

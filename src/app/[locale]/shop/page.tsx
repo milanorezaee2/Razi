@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ShopFiltered, type FamilyOption } from "@/components/product/ShopFiltered";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { FAMILY_PARENT, PRODUCT_FAMILIES } from "@/lib/data/families";
+import { FAMILY_PARENT, orderedProductFamilies } from "@/lib/data/families";
 import { enrichProduct, getSite } from "@/lib/data/queries";
 import { dictionaries } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/types";
@@ -29,10 +29,9 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: L
   }));
   const usedCats = site.categories.filter((c) => site.products.some((p) => p.categoryId === c.id));
 
-  /* The eight product families every pattern is made for — the «پترن» tree in the sidebar.
-     All of them stay listed (even before the first product lands in one) so an artist's
-     upload always has a real category to point at. */
-  const families: FamilyOption[] = PRODUCT_FAMILIES.map((family) => {
+  /* The managed taxonomy stays listed even before its first product is published. */
+  const productFamilies = orderedProductFamilies(site.productFamilies);
+  const families: FamilyOption[] = productFamilies.map((family) => {
     const count = site.products.filter((p) => p.familyId === family.id).length;
     return { id: family.slug, label: family.name[locale] ?? family.name.fa, count: count || undefined };
   });
@@ -57,6 +56,7 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: L
           description={exclusive ? t(exclusive.description, locale) : d.home.exclusiveDesc}
           products={products}
           families={families}
+          productFamilies={productFamilies}
           brand={d.brand}
           labels={{
             siteExclusive: d.common.siteExclusive,
@@ -80,6 +80,7 @@ export default async function ShopPage({ params }: { params: Promise<{ locale: L
           locale={locale}
           title={locale === "fa" ? "فروشگاه سطح و دکور" : "Surface & décor shop"}
           families={families}
+          productFamilies={productFamilies}
           familyParent={FAMILY_PARENT[locale]}
           categories={usedCats
             .slice()

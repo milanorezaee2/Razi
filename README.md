@@ -302,6 +302,13 @@ portfolio/education flags & ordering, banners, SEO. Every save is live immediate
 
   If a save fails on a read-only filesystem the API answers `502 storage_write_failed` with the
   reason in the log — check `GET /api/health`, which reports the active backend.
+- **Contact and newsletter inbox:** `/api/contact` stores consented inquiries and `/api/newsletter`
+  stores unique opt-ins. The private admin inbox (`/admin/fa` → «درخواست‌ها و خبرنامه») can view,
+  archive, unsubscribe and export CSV. On local/VPS development these use
+  `data/contact-leads.json` and `data/newsletter-subscribers.json`; production uses the same Upstash
+  Redis configuration as the content store when available. A serverless deploy must configure Redis
+  for durable storage. The app records submissions but does **not** send contact notifications or
+  newsletter campaigns until a CRM/ESP integration is configured.
 - **Images and videos:** new artist/admin media is saved to the S3-compatible object store configured
   by `MARKETPLACE_S3_*` and served from `/api/media/<id>` on the app's own domain. Without S3, the
   app uses `data/objects`; that directory must be a writable, persistent disk/volume. On serverless

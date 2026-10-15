@@ -8,6 +8,7 @@ import { assetColourways, assetDeliverables, assetFormatIds, deliveryBytes } fro
 import { DELIVERABLE_FORMATS, type DeliverableFormatId } from "@/lib/marketplace/formats";
 import type { ArtistAnalytics } from "@/lib/marketplace/types";
 import type { Artist } from "@/lib/types";
+import type { ProductFamily } from "@/lib/data/families";
 import type { Asset } from "@/lib/marketplace/types";
 
 /**
@@ -60,6 +61,7 @@ export interface DeliveryGaps {
 
 export interface ArtistDashboardData {
   artist: Artist | null;
+  productFamilies: ProductFamily[];
   artistName: { fa: string; en: string };
   sharePct: number;
   works: DashboardWork[];
@@ -213,6 +215,7 @@ export async function getArtistDashboard(input: {
 
   return {
     artist,
+    productFamilies: content.productFamilies,
     artistName: artist?.name ?? { fa: "", en: "" },
     sharePct,
     works,

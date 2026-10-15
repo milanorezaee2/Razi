@@ -71,6 +71,7 @@ export default async function CheckoutReturnPage({
         id: license.id,
         serial: license.serial,
         assetId: license.assetId,
+        status: license.status,
         title: license.title,
         licenseKind: tier?.title[locale] ?? license.licenseKind,
         exclusive: license.exclusive,
@@ -116,6 +117,10 @@ export default async function CheckoutReturnPage({
           order: {
             id: resolved.id,
             status: resolved.status,
+            refundMode: resolved.refundMode,
+            manualRefundConfirmed: resolved.manualRefundConfirmed,
+            refundReference: resolved.refundReference,
+            refundedAt: resolved.refundedAt,
             subtotal: resolved.subtotal,
             discount: resolved.discount,
             tax: resolved.tax,

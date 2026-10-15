@@ -22,7 +22,7 @@ import { useLocale } from "@/components/providers/AppProviders";
 import { Badge } from "@/components/ui/Badge";
 import { formatPrice, href } from "@/lib/utils";
 import { SESSION_FETCH } from "@/lib/http";
-import { familyName } from "@/lib/data/families";
+import { familyName, type ProductFamily } from "@/lib/data/families";
 import { formatLabel } from "@/lib/marketplace/formats";
 import type { PricePair } from "@/lib/marketplace/types";
 import type { Localized } from "@/lib/i18n/types";
@@ -72,13 +72,51 @@ interface Upload {
   parts: number;
 }
 
+interface WalletPayout {
+  id: string;
+  amount: PricePair;
+  status: string;
+  requestedAt: string;
+  method: string;
+  reference?: string;
+  settlementMode?: "manual";
+  manualTransferConfirmed?: boolean;
+  manualTransferConfirmedAt?: string;
+  manualTransferConfirmedBy?: string;
+  paymentEvidence?: string;
+}
+
+function isManuallyConfirmedPayout(payout: WalletPayout): boolean {
+  return payout.status === "paid"
+    && payout.settlementMode === "manual"
+    && payout.manualTransferConfirmed === true
+    && Boolean(payout.manualTransferConfirmedAt)
+    && Boolean(payout.manualTransferConfirmedBy?.trim())
+    && Boolean(payout.reference?.trim())
+    && Boolean(payout.paymentEvidence?.trim());
+}
+
+function walletPayoutStatusLabel(payout: WalletPayout, fa: boolean): string {
+  if (payout.status === "paid") {
+    return isManuallyConfirmedPayout(payout)
+      ? (fa ? "تأیید دستی انتقال بانکی (خارج از برنامه)" : "Manual off-app bank transfer confirmed")
+      : (fa ? "نیازمند تطبیق تأیید دستی" : "Manual confirmation reconciliation required");
+  }
+  const labels: Record<string, { fa: string; en: string }> = {
+    requested: { fa: "درخواست‌شده", en: "Requested" },
+    approved: { fa: "در انتظار انتقال دستی", en: "Awaiting manual transfer" },
+    rejected: { fa: "ردشده", en: "Rejected" },
+  };
+  return labels[payout.status]?.[fa ? "fa" : "en"] ?? payout.status;
+}
+
 interface WalletData {
   balance: { total: PricePair; paidOut: PricePair; pending: PricePair; available: PricePair; salesCount: number };
   minimum: PricePair;
   licenses: number;
   monthly: { month: string; amount: PricePair }[];
   profile: { method: string; iban?: string; cardNumber?: string; paypalEmail?: string; holder: string } | null;
-  payouts: { id: string; amount: PricePair; status: string; requestedAt: string; method: string; reference?: string }[];
+  payouts: WalletPayout[];
   ledger: { id: string; kind: string; amount: PricePair; note?: Localized; createdAt: string }[];
 }
 
@@ -130,7 +168,7 @@ function isStudioTab(value: string | null): value is Tab {
   return value !== null && (STUDIO_TABS as string[]).includes(value);
 }
 
-export function ArtistStudio({ locale }: { locale: "fa" | "en" }) {
+export function ArtistStudio({ locale, productFamilies }: { locale: "fa" | "en"; productFamilies: ProductFamily[] }) {
   useLocale();
   const fa = locale === "fa";
   const router = useRouter();
@@ -391,7 +429,7 @@ export function ArtistStudio({ locale }: { locale: "fa" | "en" }) {
                                   : "Sold exclusively"
                                 : asset.status}
                       </Badge>
-                      {asset.familyId && <Badge tone="neutral">{familyName(asset.familyId, locale)}</Badge>}
+                      {asset.familyId && <Badge tone="neutral">{familyName(productFamilies, asset.familyId, locale)}</Badge>}
                       {asset.visibility === "private" && asset.status === "approved" && <Badge tone="outline">{fa ? "پنهان" : "Hidden"}</Badge>}
                     </div>
 
@@ -484,7 +522,7 @@ export function ArtistStudio({ locale }: { locale: "fa" | "en" }) {
               : "Your file is stored privately, virus-scanned, watermarked previews and mockups are generated, and it is queued for review. Files over 200 MB upload in chunks."}
           </p>
           <div className="mt-5">
-            <MasterUploader onUploaded={() => void loadAll()} />
+            <MasterUploader families={productFamilies} onUploaded={() => void loadAll()} />
           </div>
         </section>
       )}
@@ -508,7 +546,7 @@ export function ArtistStudio({ locale }: { locale: "fa" | "en" }) {
                     <dd>{formatPrice(wallet.balance.pending, locale)}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-foreground-secondary">{fa ? "تسویه‌شده" : "Paid out"}</dt>
+                    <dt className="text-foreground-secondary">{fa ? "ثبت‌شده به‌عنوان تسویه" : "Recorded as settled"}</dt>
                     <dd>{formatPrice(wallet.balance.paidOut, locale)}</dd>
                   </div>
                   <div className="flex justify-between border-t border-border pt-2">
@@ -516,6 +554,11 @@ export function ArtistStudio({ locale }: { locale: "fa" | "en" }) {
                     <dd className="font-medium">{formatPrice(wallet.balance.total, locale)}</dd>
                   </div>
                 </dl>
+                <p className="mt-3 text-caption text-foreground-secondary">
+                  {fa
+                    ? "انتقال وجه توسط این سامانه انجام نمی‌شود. تسویه‌ها فقط پس از انتقال بانکی خارج از برنامه، ثبت مرجع و مدرک و تأیید اپراتور ثبت می‌شوند؛ رکوردهای قدیمیِ نیازمند تطبیق از موجودی قابل‌درخواست کسر می‌مانند."
+                    : "This app does not transfer funds. Payouts are recorded only after an off-app bank transfer, its reference and evidence, and operator confirmation; legacy records needing reconciliation remain withheld from the available balance."}
+                </p>
 
                 <p className="mt-3 text-caption text-foreground-secondary">
                   {fa
@@ -536,10 +579,18 @@ export function ArtistStudio({ locale }: { locale: "fa" | "en" }) {
                   <ul className="mt-5 space-y-2 text-caption">
                     {wallet.payouts.slice(0, 6).map((payout) => (
                       <li key={payout.id} className="flex items-center justify-between gap-3 rounded-lg bg-background-secondary px-3 py-2">
-                        <span>{formatPrice(payout.amount, locale)}</span>
-                        <span className="text-foreground-secondary">
-                          {payout.status} · {new Date(payout.requestedAt).toLocaleDateString(fa ? "fa-IR" : "en-GB")}
-                        </span>
+                        <span className="shrink-0">{formatPrice(payout.amount, locale)}</span>
+                        <div className="min-w-0 text-right text-foreground-secondary">
+                          <p>{walletPayoutStatusLabel(payout, fa)} · {new Date(payout.requestedAt).toLocaleDateString(fa ? "fa-IR" : "en-GB")}</p>
+                          {payout.reference && (
+                            <p className="truncate" dir="ltr">{fa ? "مرجع:" : "Reference:"} {payout.reference}</p>
+                          )}
+                          {isManuallyConfirmedPayout(payout) && payout.manualTransferConfirmedAt && (
+                            <p className="truncate">
+                              {fa ? "تأیید اپراتور:" : "Operator confirmed:"} {new Date(payout.manualTransferConfirmedAt).toLocaleDateString(fa ? "fa-IR" : "en-GB")}
+                            </p>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>

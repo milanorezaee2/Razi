@@ -67,6 +67,8 @@ test("local content ETags compare-and-write atomically and reject stale concurre
       if (specifier === "server-only") return {};
       if (specifier === "./seed") return { seedContent };
       if (specifier === "@/lib/media-storage") return { rewriteLegacyMediaUrls: (content) => content };
+      if (specifier === "@/lib/admin-content-validation") return { assertSiteContentRelations: () => {} };
+      if (specifier === "../pattern-status") return { backfillLegacyPatternStatuses: (patterns = []) => patterns.map((pattern) => pattern.status ? pattern : { ...pattern, status: "published" }) };
       if (specifier === "./razieh-textile-portfolio") {
         return { RAZIEH_TEXTILE_CATEGORY: {}, RAZIEH_TEXTILE_PORTFOLIO: {} };
       }

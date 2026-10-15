@@ -370,6 +370,15 @@ export interface MarketplaceOrder {
   updatedAt: string;
   paidAt?: string;
   notes?: string;
+  /** The current app only records refunds confirmed as processed outside the app. */
+  refundMode?: "manual";
+  refundReference?: string;
+  refundEvidence?: string;
+  /** The operator attested that the external transfer/refund had already completed. */
+  manualRefundConfirmed?: boolean;
+  /** When and by whom the manual off-app refund was recorded. */
+  refundedAt?: string;
+  refundedBy?: string;
 }
 
 export interface DownloadRecord {
@@ -504,6 +513,7 @@ export interface LedgerEntry {
   createdAt: string;
 }
 
+/** `paid` is an internal record of an operator-confirmed manual transfer, never an automatic provider result. */
 export type PayoutStatus = "requested" | "approved" | "paid" | "rejected";
 
 export interface PayoutProfile {
@@ -532,6 +542,14 @@ export interface Payout {
   paidAt?: string;
   reference?: string;
   note?: string;
+  /** This app supports only manual, off-app transfers; no automatic payout provider is connected. */
+  settlementMode?: "manual";
+  /** Explicit server-recorded operator attestation, required before a payout ledger debit is written. */
+  manualTransferConfirmed?: boolean;
+  manualTransferConfirmedAt?: string;
+  manualTransferConfirmedBy?: string;
+  /** URL or identifying details for the bank-transfer receipt / evidence. */
+  paymentEvidence?: string;
   /** Balance snapshot at request time (audit trail). */
   balanceAtRequest?: PricePair;
 }

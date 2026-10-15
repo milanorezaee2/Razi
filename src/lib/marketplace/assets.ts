@@ -16,6 +16,8 @@ import { WATERMARK_LINES, buildDerivatives, cornerTagFor, readImageSize, renderC
 import { detectFormat, formatById, formatStoredMime, minUploadBytes, verifyFileSignature, type ExportFormatId } from "./formats";
 import { DEFAULT_COLOURWAY_ID, sanitizeHex } from "./colourways";
 import { getPublicArtistIds, isPublicArtistId } from "@/lib/artist/access";
+import { getContent } from "@/lib/data/store";
+import { withProductFamilyLock } from "@/lib/product-family-lock";
 import { ensureMarketplaceSeed } from "./seed";
 import { refundPrice } from "./royalty";
 import type { Localized } from "@/lib/i18n/types";
@@ -436,6 +438,10 @@ export async function completeUpload(
   session: UploadSession,
   options: CompleteUploadOptions = {},
 ): Promise<CompletedUpload> {
+  const content = await getContent();
+  if (!session.meta.familyId || !content.productFamilies.some((family) => family.id === session.meta.familyId)) {
+    throw new Error("invalid_family");
+  }
   const onStage = options.onStage ?? (() => undefined);
   /* The format the artist picked wins; a legacy client without one falls back to
      sniffing the file name, so old bookmarklets/scripts keep working. */
@@ -595,15 +601,28 @@ export async function completeUpload(
     updatedAt: new Date().toISOString(),
   };
 
-  await mutateCollection<Asset, void>(KEYS.assets, (assets) => ({ next: [...assets, asset], result: undefined }));
-  await mutateCollection<UploadSession, void>(KEYS.uploads, (sessions) => ({
-    next: sessions.map((item) =>
-      item.id === session.id
-        ? { ...item, status: "completed" as const, completedAt: new Date().toISOString(), assetId: asset.id }
-        : item,
-    ),
-    result: undefined,
-  }));
+  await withProductFamilyLock(async () => {
+    const latestContent = await getContent();
+    if (!asset.familyId || !latestContent.productFamilies.some((family) => family.id === asset.familyId)) {
+      await Promise.all([
+        masterStoredKey,
+        ...(derivation?.derivatives.map((file) => file.key) ?? []),
+        derivation?.previewKey,
+        derivation?.tileKey,
+        ...(derivation?.mockups.map((file) => file.key) ?? []),
+      ].filter((key): key is string => Boolean(key)).map((key) => deleteObject(key).catch(() => undefined)));
+      throw new Error("invalid_family");
+    }
+    await mutateCollection<Asset, void>(KEYS.assets, (assets) => ({ next: [...assets, asset], result: undefined }));
+    await mutateCollection<UploadSession, void>(KEYS.uploads, (sessions) => ({
+      next: sessions.map((item) =>
+        item.id === session.id
+          ? { ...item, status: "completed" as const, completedAt: new Date().toISOString(), assetId: asset.id }
+          : item,
+      ),
+      result: undefined,
+    }));
+  });
 
   const fileCount = 1;
   void fileCount;

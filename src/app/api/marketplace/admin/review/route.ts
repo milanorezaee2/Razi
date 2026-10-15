@@ -3,6 +3,8 @@ import { sendReviewNotice } from "@/lib/marketplace/email";
 import { fail, json, readJson, requireAdmin } from "@/lib/marketplace/guard";
 import { assetColourways, assetFormatIds, deliveryBytes } from "@/lib/marketplace/colourways";
 import { isDeliverableFormatId } from "@/lib/marketplace/formats";
+import { getAsset, updateAssetTiers } from "@/lib/marketplace/assets";
+import { applyTierPricingPatches } from "@/lib/marketplace/tier-pricing";
 import type { LicenseTier } from "@/lib/marketplace/types";
 
 export const dynamic = "force-dynamic";
@@ -72,30 +74,35 @@ export async function GET(request: Request) {
 /**
  * POST /api/marketplace/admin/review
  *
- * actions: approve | reject | delist | relist | rescan | regenerate | purge
- * Approving can also publish immediately and rewrite the price list, which is
- * how the studio corrects an artist's pricing before the work goes live.
+ * actions: approve | save_tiers | reject | delist | relist | rescan | regenerate | purge
+ * Moderators may adjust only tier prices and availability, saving them without
+ * changing review status or applying them together with the approval decision.
  */
 export async function POST(request: Request) {
   const auth = await requireAdmin();
   if ("response" in auth) return auth.response;
 
   const body = await readJson<{
-    action?: "approve" | "reject" | "delist" | "relist" | "rescan" | "regenerate" | "purge";
+    action?: "approve" | "save_tiers" | "reject" | "delist" | "relist" | "rescan" | "regenerate" | "purge";
     assetId?: string;
     note?: string;
     publish?: boolean;
-    tiers?: { id?: string; priceFa?: number; priceEn?: number; enabled?: boolean }[];
+    tiers?: unknown;
   }>(request);
 
   if (!body?.assetId || !body.action) return fail("invalid_payload");
 
-  const tiers: LicenseTier[] | undefined = body.tiers?.length
-    ? (body.tiers as unknown as LicenseTier[])
-    : undefined;
-
   switch (body.action) {
     case "approve": {
+      let tiers: LicenseTier[] | undefined;
+      if (body.tiers !== undefined) {
+        const current = await getAsset(body.assetId);
+        if (!current) return fail("not_found", 404);
+        const result = applyTierPricingPatches(current.tiers, body.tiers);
+        if (!result.ok) return fail(result.error, 422);
+        tiers = result.tiers;
+      }
+
       const asset = await approveAsset(body.assetId, {
         adminEmail: auth.user.email,
         publish: body.publish,
@@ -108,6 +115,16 @@ export async function POST(request: Request) {
         await sendReviewNotice({ to: owner, assetTitle: asset.title, status: "approved", locale: "fa" }).catch(() => undefined);
       }
       return json({ ok: true, asset: { id: asset.id, status: asset.status, visibility: asset.visibility } });
+    }
+    case "save_tiers": {
+      if (!Array.isArray(body.tiers) || body.tiers.length === 0) return fail("invalid_tiers", 422);
+      const current = await getAsset(body.assetId);
+      if (!current) return fail("not_found", 404);
+      const result = applyTierPricingPatches(current.tiers, body.tiers);
+      if (!result.ok) return fail(result.error, 422);
+      const asset = await updateAssetTiers(body.assetId, result.tiers);
+      if (!asset) return fail("not_found", 404);
+      return json({ ok: true, asset: { id: asset.id, tiers: asset.tiers } });
     }
     case "reject": {
       const asset = await rejectAsset(body.assetId, auth.user.email, body.note ?? "rejected");

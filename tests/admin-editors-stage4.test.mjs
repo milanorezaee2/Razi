@@ -81,8 +81,17 @@ test("pattern and product managers expose full editors while preserving first-va
   }
   assert.match(productEditor, /buildProductWithFirstVariant/);
   assert.match(productEditor, /hasUniqueIds\(form\.colors\)/);
-  assert.match(productEditor, /فهرست فعلی در کد سایت تعریف شده است/);
-  assert.match(products, /فهرست خانواده‌ها در کد سایت تعریف شده/);
+  assert.match(productEditor, /families\.map/);
+  assert.match(products, /families=\{productFamilies\}/);
+  assert.match(products, /orderedProductFamilies\(data\.productFamilies\)/);
+  const familiesManager = fs.readFileSync("src/components/admin/ProductFamiliesManager.tsx", "utf8");
+  assert.match(familiesManager, /productFamilies/);
+  assert.match(familiesManager, /marketplaceAssets/);
+  assert.match(familiesManager, /openUploads/);
+  assert.match(familiesManager, /name\.fa/);
+  assert.match(familiesManager, /name\.en/);
+  assert.match(familiesManager, /slug/);
+  assert.match(familiesManager, /moveFamily/);
   assert.match(productEditor, /MediaUploadControl/);
 });
 
@@ -96,6 +105,8 @@ test("artist and portfolio editors persist profile services, story blocks, media
     assert.match(artistEditor, new RegExp(`\\b${field}\\b`), `artist editor missing ${field}`);
   }
   assert.match(artistEditor, /MediaUploadControl/);
+  assert.match(artistEditor, /signupFamilies/);
+  assert.match(artistEditor, /families\.map/);
   assert.match(artistEditor, /validateArtistServices\(services\)/);
   assert.match(portfolioManager, /<PortfolioEditDrawer/);
   for (const field of ["story", "patternIds", "productIds", "MediaUploadControl", "draftStatus"]) {
@@ -107,21 +118,23 @@ test("artist and portfolio editors persist profile services, story blocks, media
   assert.match(portfolioPage, /b\.text \? t\(b\.text, locale\)/, "public portfolio renderer has no default text-block renderer");
 });
 
-test("home-section guidance matches static content and the actual contact/newsletter endpoints", () => {
+test("home-section guidance matches the persisted contact/newsletter inbox", () => {
   const manager = fs.readFileSync("src/components/admin/HomeSectionsManager.tsx", "utf8");
   const newsletterApi = fs.readFileSync("src/app/api/newsletter/route.ts", "utf8");
   const contactApi = fs.readFileSync("src/app/api/contact/route.ts", "utf8");
+  const adminApi = fs.readFileSync("src/app/api/admin/leads/route.ts", "utf8");
   assert.match(manager, /دیکشنری دوزبانه/);
   assert.match(manager, /اولین پورتفولیو/);
   assert.match(manager, /چهارمین پورتفولیو/);
-  assert.match(manager, /\/api\/newsletter/);
-  assert.match(manager, /\/api\/contact/);
-  assert.match(manager, /ذخیره یا ایمیل نمی‌کند/);
-  assert.match(manager, /فهرست یا سامانهٔ ایمیلی ذخیره نمی‌کند/);
-  assert.match(manager, /فقط پاسخ آزمایشی موفق می‌دهد/);
-  assert.match(newsletterApi, /Integration point: connect to your ESP \/ CRM here/);
-  assert.match(newsletterApi, /return NextResponse\.json\(\{ ok: true \}\)/);
-  assert.match(contactApi, /Integration point: forward to CRM \/ email/);
-  assert.match(contactApi, /REQ-\$\{Date\.now\(\)/);
+  assert.match(manager, /درخواست‌ها و خبرنامه/);
+  assert.match(manager, /خروجی CSV/);
+  assert.match(manager, /ارسال ایمیل یا اتصال CRM هنوز پیکربندی نشده است/);
+  assert.match(newsletterApi, /subscribeNewsletter\(/);
+  assert.match(newsletterApi, /!consent/);
+  assert.match(contactApi, /createContactLead\(/);
+  assert.match(contactApi, /consentAt: createdAt/);
+  assert.match(adminApi, /format=csv/);
+  assert.doesNotMatch(newsletterApi, /Integration point: connect to your ESP/);
+  assert.doesNotMatch(contactApi, /Integration point: forward to CRM/);
   assert.doesNotMatch(manager, /برای ویرایش متن، به تب «بنرها» بروید/);
 });

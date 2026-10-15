@@ -30,6 +30,8 @@ async function loadContentStore() {
     if (specifier === "server-only") return {};
     if (specifier === "./seed") return { seedContent };
     if (specifier === "@/lib/media-storage") return { rewriteLegacyMediaUrls: (content) => content };
+    if (specifier === "@/lib/admin-content-validation") return { assertSiteContentRelations: () => {} };
+    if (specifier === "../pattern-status") return { backfillLegacyPatternStatuses: (patterns = []) => patterns.map((pattern) => pattern.status ? pattern : { ...pattern, status: "published" }) };
     if (specifier === "./razieh-textile-portfolio") {
       return { RAZIEH_TEXTILE_CATEGORY: {}, RAZIEH_TEXTILE_PORTFOLIO: {} };
     }
@@ -90,4 +92,25 @@ test("admin artist and user mutations return the content version needed by Admin
   assert.match(usersManager, /onContentMutation\([\s\S]*?headers\.get\("ETag"\)/);
   assert.match(adminApp, /setContentEtag\(mutation\.etag\.replace/);
   assert.match(adminApp, /applyContentMutation/);
+});
+
+test("artist and user deletion APIs reject mutations that would orphan content references", () => {
+  const artistsRoute = read("src/app/api/admin/artists/route.ts");
+  const usersRoute = read("src/app/api/admin/users/route.ts");
+  const contentRoute = read("src/app/api/admin/content/route.ts");
+  const contentStore = read("src/lib/data/store.ts");
+  const artistsManager = read("src/components/admin/ArtistsManager.tsx");
+  const usersManager = read("src/components/admin/UsersManager.tsx");
+
+  assert.match(artistsRoute, /assertNoNewContentRelationIssues\(content, nextContent\)/);
+  assert.match(usersRoute, /assertNoNewContentRelationIssues\(content, nextContent\)/);
+  assert.match(contentStore, /assertSiteContentRelations\(prepareContent\(seedContent\)\)/);
+  assert.match(contentRoute, /error: e\.message, issues: e\.issues/);
+  for (const route of [artistsRoute, usersRoute]) {
+    assert.match(route, /InvalidContentRelationsError/);
+    assert.match(route, /error: error\.message, issues: error\.issues/);
+    assert.match(route, /status: 422/);
+  }
+  assert.match(artistsManager, /formatInvalidContentRelationsMessage\(result\.issues\)/);
+  assert.match(usersManager, /formatInvalidContentRelationsMessage\(result\.issues\)/);
 });

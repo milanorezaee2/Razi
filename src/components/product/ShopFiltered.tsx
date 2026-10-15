@@ -9,7 +9,7 @@ import { EmptyState, GridSkeleton } from "@/components/ui/States";
 import { useLocale } from "@/components/providers/AppProviders";
 import { filterProducts } from "@/lib/data/filters";
 import { enrichProduct } from "@/lib/data/enrich";
-import { FAMILY_OTHER, PRODUCT_FAMILIES } from "@/lib/data/families";
+import { FAMILY_OTHER, type ProductFamily } from "@/lib/data/families";
 import { cn, faNum } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/types";
 import type { SiteContent } from "@/lib/types";
@@ -30,11 +30,13 @@ interface Props {
    * gains the «پترن» group the families hang under.
    */
   families?: FilterOption[];
+  /** Current server-managed taxonomy, ordered for the shop sections. */
+  productFamilies: ProductFamily[];
   /** Label of the parent group the families sit under («پترن»). */
   familyParent?: string;
 }
 
-function FilteredContent({ site, locale, categories, sorts, extra, title, families, familyParent }: Props) {
+function FilteredContent({ site, locale, categories, sorts, extra, title, families, productFamilies, familyParent }: Props) {
   const { dict } = useLocale();
   const fa = locale === "fa";
   const sp = useSearchParams();
@@ -46,7 +48,7 @@ function FilteredContent({ site, locale, categories, sorts, extra, title, famili
   });
 
   const catMap = Object.fromEntries(site.categories.map((c) => [c.slug, c.id]));
-  const familyMap = Object.fromEntries(PRODUCT_FAMILIES.map((family) => [family.slug, family.id]));
+  const familyMap = Object.fromEntries(productFamilies.map((family) => [family.slug, family.id]));
   const list = filterProducts(site.products, spRecord, catMap, familyMap).map((p) => enrichProduct(site, p));
 
   const activeFamily = sp.get("family");
@@ -56,7 +58,7 @@ function FilteredContent({ site, locale, categories, sorts, extra, title, famili
   /* One section per family, in the taxonomy order, plus a home for unclassified items. */
   const sections = grouped
     ? [
-        ...PRODUCT_FAMILIES.map((family) => ({
+        ...productFamilies.map((family) => ({
           key: family.slug,
           label: family.name[locale] ?? family.name.fa,
           items: list.filter((p) => p.familyId === family.id),

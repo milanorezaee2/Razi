@@ -1,4 +1,5 @@
 import type { Category, HeroContent, PortfolioHeroSettings, SiteContent } from "../../types";
+import { DEFAULT_PRODUCT_FAMILIES } from "../families";
 import { RAZIEH_TEXTILE_CATEGORY } from "../razieh-textile-portfolio";
 import { L } from "./helpers";
 import { categories, spaces } from "./base";
@@ -69,5 +70,6 @@ export const portfolioHero: PortfolioHeroSettings = {
 export const portfolioCategories: Category[] = [RAZIEH_TEXTILE_CATEGORY];
 
 export const seedContent: SiteContent = {
+  productFamilies: DEFAULT_PRODUCT_FAMILIES,
   categories, spaces, artists, patterns, products, portfolios, portfolioCategories, education, stories, collections, homeSections, banners, seo, hero, announcementBars, financialConfig, portfolioHero,
 };
