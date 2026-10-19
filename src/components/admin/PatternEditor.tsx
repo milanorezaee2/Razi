@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { slugify, t } from "@/lib/utils";
 import { hasUniqueIds } from "@/lib/admin-editor-validation";
-import type { Category, Colorway, Pattern, PatternSpec, Artist, Space } from "@/lib/types";
+import { PATTERN_STATUS_META } from "@/lib/pattern-status";
+import type { Category, Colorway, Pattern, PatternSpec, PatternStatus, Artist, Space } from "@/lib/types";
 import type { Locale, Localized } from "@/lib/i18n/types";
 
 type PatternEditorProps = {
@@ -91,6 +92,7 @@ export function PatternEditor({
       gallery: colorway.gallery ? [...colorway.gallery] : undefined,
     })),
     tags: [...(pattern.tags ?? [])],
+    status: pattern.status ?? "published",
     createdAt: pattern.createdAt ?? new Date().toISOString().slice(0, 10),
     likes: Number.isSafeInteger(pattern.likes) ? pattern.likes : 0,
   }));
@@ -177,6 +179,9 @@ export function PatternEditor({
       title: { fa: titleFa, en: form.title.en.trim() || titleFa },
       description: { fa: form.description.fa.trim(), en: form.description.en.trim() },
       image: form.image.trim(),
+      status: form.status ?? "published",
+      // A rejection note only belongs to a rejected pattern.
+      rejectionNote: form.status === "rejected" ? form.rejectionNote?.trim() || undefined : undefined,
       gallery: galleryInput.split("\n").map((value) => value.trim()).filter(Boolean),
       palette: paletteInput.split(/[\n,]+/).map((value) => value.trim()).filter(Boolean),
       tags: tagsInput.split(/[\n,]+/).map((value) => value.trim()).filter(Boolean),
@@ -240,6 +245,29 @@ export function PatternEditor({
                   <label key={key} className="flex items-center gap-1.5"><input type="checkbox" checked={form[key]} onChange={(event) => set(key, event.target.checked)} className="accent-accent" />{label}</label>
                 ))}
               </div>
+            </div>
+          </section>
+
+          <section className="space-y-3 border-t border-border pt-5">
+            <div>
+              <h3 className="text-sm font-semibold">وضعیت انتشار</h3>
+              <p className="mt-0.5 text-xs text-muted">
+                پترنی که طراح فرستاده تا زمان تأیید شما در سایت دیده نمی‌شود. فقط وضعیت «منتشرشده» در فهرست، جزئیات، جست‌وجو و نقشهٔ سایت نمایش داده می‌شود.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="وضعیت">
+                <Select value={form.status ?? "published"} onChange={(event) => set("status", event.target.value as Pattern["status"])}>
+                  {(Object.keys(PATTERN_STATUS_META) as PatternStatus[]).map((status) => (
+                    <option key={status} value={status}>{PATTERN_STATUS_META[status].label.fa}</option>
+                  ))}
+                </Select>
+              </Field>
+              {form.status === "rejected" ? (
+                <Field label="دلیل رد (به طراح نمایش داده می‌شود)">
+                  <Textarea dir="rtl" rows={2} value={form.rejectionNote ?? ""} onChange={(event) => set("rejectionNote", event.target.value.trim() || undefined)} placeholder="مثلاً: کیفیت تصاویر برای چاپ کافی نیست." />
+                </Field>
+              ) : null}
             </div>
           </section>
 

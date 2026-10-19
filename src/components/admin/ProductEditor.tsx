@@ -7,7 +7,7 @@ import { FirstProductVariantFields, EMPTY_FIRST_PRODUCT_VARIANT, type FirstProdu
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
-import { PRODUCT_FAMILIES } from "@/lib/data/families";
+import type { ProductFamily } from "@/lib/data/families";
 import { buildProductWithFirstVariant, type FirstProductVariantError } from "@/lib/product-variants";
 import { slugify, t } from "@/lib/utils";
 import { hasUniqueIds } from "@/lib/admin-editor-validation";
@@ -61,6 +61,7 @@ export function ProductEditor({
   categories,
   patterns,
   artists,
+  families,
   locale,
   onSave,
   onClose,
@@ -70,6 +71,7 @@ export function ProductEditor({
   categories: Category[];
   patterns: Pattern[];
   artists: Artist[];
+  families: ProductFamily[];
   locale: Locale;
   onSave: (product: Product) => void;
   onClose: () => void;
@@ -206,7 +208,7 @@ export function ProductEditor({
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="دسته‌بندی *"><Select value={form.categoryId} onChange={(event) => set("categoryId", event.target.value)}><option value="">انتخاب کنید</option>{categories.map((category) => <option key={category.id} value={category.id}>{t(category.name, locale)}</option>)}</Select></Field>
-              <Field label="خانوادهٔ محصول" hint="فهرست فعلی در کد سایت تعریف شده است؛ افزودن یا حذف خانواده از این فرم پشتیبانی نمی‌شود."><Select value={form.familyId ?? ""} onChange={(event) => set("familyId", event.target.value || null)}><option value="">بدون خانواده</option>{PRODUCT_FAMILIES.map((family) => <option key={family.id} value={family.id}>{family.name[locale]}</option>)}</Select></Field>
+              <Field label="خانوادهٔ محصول" hint="گزینه‌ها از فهرست مدیریت‌شدهٔ خانواده‌های محصول دریافت می‌شوند."><Select value={form.familyId ?? ""} onChange={(event) => set("familyId", event.target.value || null)}><option value="">بدون خانواده</option>{families.map((family) => <option key={family.id} value={family.id}>{family.name[locale] ?? family.name.fa}</option>)}</Select></Field>
               <Field label="پترن مرتبط"><Select value={form.patternId ?? ""} onChange={(event) => set("patternId", event.target.value || null)}><option value="">بدون پترن</option>{patterns.map((pattern) => <option key={pattern.id} value={pattern.id}>{t(pattern.title, locale)}</option>)}</Select></Field>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

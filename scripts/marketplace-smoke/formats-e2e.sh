@@ -205,11 +205,38 @@ if queued:
     check("queue shows the total delivery size", (queued["asset"].get("deliveryBytes") or 0) > 0,
           f"{queued['asset'].get('deliveryBytes')} bytes")
 
-heading("7. admin approves and publishes it")
-review = json.loads(curl(["-b", ADMIN, "-X", "POST", f"{BASE}/api/marketplace/admin/review",
-                          "-H", "content-type: application/json", "--data-binary", "@-"],
-                         json.dumps({"action": "approve", "assetId": asset_id, "publish": True}).encode()))
+heading("7. admin moderates tier prices, then approves and publishes it")
+moderated_personal_fa = 1_234_567
+moderated_personal_en = 45.67
+saved = json.loads(api("POST", "/api/marketplace/admin/review", {
+    "action": "save_tiers", "assetId": asset_id,
+    "tiers": [{"id": "tier-personal", "priceFa": moderated_personal_fa,
+               "priceEn": moderated_personal_en, "enabled": True}],
+}, cookie=ADMIN))
+check("moderator can save prices without approving", saved.get("ok") is True, json.dumps(saved, ensure_ascii=False)[:120])
+artist_snapshot = json.loads(api("GET", "/api/marketplace/artist/assets"))
+moderated_asset = next((row for row in artist_snapshot.get("assets", []) if row.get("id") == asset_id), {})
+personal = next((row for row in moderated_asset.get("tiers", []) if row.get("id") == "tier-personal"), {})
+check("saved tier price persists while asset remains in review",
+      moderated_asset.get("status") == "pending_review"
+      and personal.get("price") == {"fa": moderated_personal_fa, "en": moderated_personal_en},
+      json.dumps({"status": moderated_asset.get("status"), "price": personal.get("price")}, ensure_ascii=False))
+
+moderated_commercial_fa = 3_456_789
+moderated_commercial_en = 89.25
+review = json.loads(api("POST", "/api/marketplace/admin/review", {
+    "action": "approve", "assetId": asset_id, "publish": True,
+    "tiers": [{"id": "tier-commercial", "priceFa": moderated_commercial_fa,
+               "priceEn": moderated_commercial_en, "enabled": True}],
+}, cookie=ADMIN))
 check("approved & published", review.get("ok") is True, json.dumps(review, ensure_ascii=False)[:120])
+artist_snapshot = json.loads(api("GET", "/api/marketplace/artist/assets"))
+moderated_asset = next((row for row in artist_snapshot.get("assets", []) if row.get("id") == asset_id), {})
+commercial = next((row for row in moderated_asset.get("tiers", []) if row.get("id") == "tier-commercial"), {})
+check("approval applies the moderator's additional price override",
+      moderated_asset.get("status") == "approved"
+      and commercial.get("price") == {"fa": moderated_commercial_fa, "en": moderated_commercial_en},
+      json.dumps({"status": moderated_asset.get("status"), "price": commercial.get("price")}, ensure_ascii=False))
 
 heading("8. the storefront advertises the colours and the formats")
 page = curl([f"{BASE}/fa/marketplace/{slug}"])

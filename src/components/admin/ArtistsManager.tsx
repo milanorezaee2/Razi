@@ -28,7 +28,8 @@ import {
   XCircle,
   Ban,
 } from "lucide-react";
-import { familyName } from "@/lib/data/families";
+import { familyName, type ProductFamily } from "@/lib/data/families";
+import { formatInvalidContentRelationsMessage } from "@/lib/admin-content-issues";
 import type { PublicUser } from "@/lib/data/users";
 import type { Artist, Pattern, SiteContent } from "@/lib/types";
 import type { AdminContentMutation } from "@/lib/admin-content-mutation";
@@ -211,6 +212,7 @@ function StatsBar({ rows }: { rows: ArtistRow[] }) {
    ────────────────────────────────────────────────────────────── */
 interface DrawerProps {
   row: ArtistRow;
+  productFamilies: ProductFamily[];
   locale: string;
   onClose: () => void;
   onEdit: () => void;
@@ -222,6 +224,7 @@ interface DrawerProps {
 
 function ArtistDetailDrawer({
   row,
+  productFamilies,
   locale,
   onClose,
   onEdit,
@@ -377,7 +380,7 @@ function ArtistDetailDrawer({
                   <div className="flex justify-between gap-3">
                     <dt className="shrink-0 text-violet-500">دسته‌های کاری</dt>
                     <dd className="text-end font-medium text-violet-900">
-                      {artist.signupFamilies.map((id) => familyName(id, "fa")).join("، ")}
+                      {artist.signupFamilies.map((id) => familyName(productFamilies, id, "fa")).join("، ")}
                     </dd>
                   </div>
                 )}
@@ -894,6 +897,7 @@ export function ArtistsManager({ data, update, onContentMutation, locale = "fa" 
 
   async function handleDelete(artistId: string, userId?: string) {
     setActionLoadingId(artistId);
+    let relationBlockMessage: string | null = null;
     try {
       const response = userId
         ? await fetch("/api/admin/users", {
@@ -908,8 +912,13 @@ export function ArtistsManager({ data, update, onContentMutation, locale = "fa" 
           });
       const result = await response.json().catch(() => null) as {
         ok?: boolean;
+        error?: string;
+        issues?: { path: string }[];
         removedArtistIds?: string[];
       } | null;
+      if (result?.error === "invalid_relationships") {
+        relationBlockMessage = formatInvalidContentRelationsMessage(result.issues);
+      }
       if (!response.ok || !result?.ok) throw new Error("artist_delete_failed");
       if (userId) setUsers((prev) => prev.filter((user) => user.id !== userId));
       onContentMutation({
@@ -918,7 +927,7 @@ export function ArtistsManager({ data, update, onContentMutation, locale = "fa" 
       });
       setSelected(null);
     } catch {
-      setError("عملیات حذف با خطا مواجه شد.");
+      setError(relationBlockMessage ?? "عملیات حذف با خطا مواجه شد.");
     } finally {
       setActionLoadingId(null);
     }
@@ -935,7 +944,7 @@ export function ArtistsManager({ data, update, onContentMutation, locale = "fa" 
 
   return (
     <div className="space-y-6" dir="rtl">
-      {editTarget && <ArtistEditor artist={editTarget} artists={data.artists} locale={locale === "en" ? "en" : "fa"} onSave={handleArtistSave} onClose={() => setEditTarget(null)} />}
+      {editTarget && <ArtistEditor artist={editTarget} artists={data.artists} families={data.productFamilies} locale={locale === "en" ? "en" : "fa"} onSave={handleArtistSave} onClose={() => setEditTarget(null)} />}
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1086,6 +1095,7 @@ export function ArtistsManager({ data, update, onContentMutation, locale = "fa" 
       {selected && (
         <ArtistDetailDrawer
           row={selected}
+          productFamilies={data.productFamilies}
           locale={locale}
           onClose={() => setSelected(null)}
           onEdit={() => setEditTarget(selected.artist)}

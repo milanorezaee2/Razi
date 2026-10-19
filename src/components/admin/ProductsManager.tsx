@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn, href, t } from "@/lib/utils";
 import type { Product, Category, SiteContent } from "@/lib/types";
-import { PRODUCT_FAMILIES } from "@/lib/data/families";
+import { orderedProductFamilies, type ProductFamily } from "@/lib/data/families";
 import { FirstProductVariantFields, EMPTY_FIRST_PRODUCT_VARIANT, type FirstProductVariantFormValues } from "@/components/admin/FirstProductVariantFields";
 import { buildProductWithFirstVariant, type FirstProductVariantError } from "@/lib/product-variants";
 import { ProductEditor } from "@/components/admin/ProductEditor";
@@ -61,6 +61,7 @@ const FLAGS: FlagKey[] = ["featured", "bestSeller", "isNew"];
 function ProductRow({
   product,
   category,
+  families,
   viewHref,
   onChange,
   onEdit,
@@ -68,6 +69,7 @@ function ProductRow({
 }: {
   product: Product;
   category: Category | null;
+  families: ProductFamily[];
   viewHref: string;
   onChange: (updated: Product) => void;
   onEdit: () => void;
@@ -118,7 +120,7 @@ function ProductRow({
             </span>
           )}
         </div>
-        <FamilyPicker product={product} onChange={onChange} className="mt-2" />
+        <FamilyPicker product={product} families={families} onChange={onChange} className="mt-2" />
       </div>
 
       {/* پرچم‌ها */}
@@ -179,6 +181,7 @@ function ProductRow({
 function ProductGridCard({
   product,
   category,
+  families,
   viewHref,
   onChange,
   onEdit,
@@ -186,6 +189,7 @@ function ProductGridCard({
 }: {
   product: Product;
   category: Category | null;
+  families: ProductFamily[];
   viewHref: string;
   onChange: (updated: Product) => void;
   onEdit: () => void;
@@ -273,7 +277,7 @@ function ProductGridCard({
           </code>
         </div>
 
-        <FamilyPicker product={product} onChange={onChange} />
+        <FamilyPicker product={product} families={families} onChange={onChange} />
 
         {/* کنترل پرچم‌ها */}
         <div className="grid grid-cols-3 gap-1">
@@ -306,10 +310,12 @@ function ProductGridCard({
 /* ─── انتخاب دسته‌بندی محصول (پترن) ─── */
 function FamilyPicker({
   product,
+  families,
   onChange,
   className,
 }: {
   product: Product;
+  families: ProductFamily[];
   onChange: (updated: Product) => void;
   className?: string;
 }) {
@@ -325,7 +331,7 @@ function FamilyPicker({
         className="h-7 max-w-[12rem] flex-1 rounded-md border border-border bg-white px-2 text-[11px] text-foreground focus:border-foreground focus:outline-none"
       >
         <option value="">بدون دسته</option>
-        {PRODUCT_FAMILIES.map((family) => (
+        {families.map((family) => (
           <option key={family.id} value={family.id}>
             {family.name.fa}
           </option>
@@ -338,10 +344,12 @@ function FamilyPicker({
 /* ─── AddProductModal ─── */
 function AddProductModal({
   categories,
+  families,
   onAdd,
   onClose,
 }: {
   categories: Category[];
+  families: ProductFamily[];
   onAdd: (product: Product) => void;
   onClose: () => void;
 }) {
@@ -480,13 +488,12 @@ function AddProductModal({
               className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm focus:outline-none"
             >
               <option value="">بدون دسته</option>
-              {PRODUCT_FAMILIES.map((family) => (
+              {families.map((family) => (
                 <option key={family.id} value={family.id}>
                   {family.name.fa}
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] leading-5 text-muted">فهرست خانواده‌ها در کد سایت تعریف شده و از پنل قابل افزودن یا حذف نیست.</p>
           </div>
           <FirstProductVariantFields
             value={firstVariant}
@@ -551,6 +558,7 @@ function AddProductModal({
 function CategorySection({
   category,
   products,
+  families,
   categoryMap,
   viewHrefFn,
   onProductChange,
@@ -560,6 +568,7 @@ function CategorySection({
 }: {
   category: Category | null;
   products: Product[];
+  families: ProductFamily[];
   categoryMap: Record<string, Category>;
   viewHrefFn: (p: Product) => string;
   onProductChange: (updated: Product) => void;
@@ -600,6 +609,7 @@ function CategorySection({
                   key={p.id}
                   product={p}
                   category={categoryMap[p.categoryId] ?? null}
+                  families={families}
                   viewHref={viewHrefFn(p)}
                   onChange={onProductChange}
                   onEdit={() => onProductEdit(p)}
@@ -614,6 +624,7 @@ function CategorySection({
                   key={p.id}
                   product={p}
                   category={categoryMap[p.categoryId] ?? null}
+                  families={families}
                   viewHref={viewHrefFn(p)}
                   onChange={onProductChange}
                   onEdit={() => onProductEdit(p)}
@@ -639,6 +650,7 @@ export function ProductsManager({
   update: (patch: Partial<SiteContent>) => void;
 }) {
   const locale = "fa";
+  const productFamilies = useMemo(() => orderedProductFamilies(data.productFamilies), [data.productFamilies]);
   const [search, setSearch] = useState("");
   const [filterFlag, setFilterFlag] = useState<FlagKey | "all">("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -757,12 +769,13 @@ export function ProductsManager({
 
   return (
     <div className="space-y-5">
-      {editTarget && <ProductEditor product={editTarget} products={data.products} categories={data.categories} patterns={data.patterns} artists={data.artists} locale={locale} onSave={onProductSave} onClose={() => setEditTarget(null)} />}
+      {editTarget && <ProductEditor product={editTarget} products={data.products} categories={data.categories} patterns={data.patterns} artists={data.artists} families={productFamilies} locale={locale} onSave={onProductSave} onClose={() => setEditTarget(null)} />}
 
       {/* مودال افزودن */}
       {showAdd && (
         <AddProductModal
           categories={data.categories}
+          families={productFamilies}
           onAdd={onProductAdd}
           onClose={() => setShowAdd(false)}
         />
@@ -961,6 +974,7 @@ export function ProductsManager({
               key={category?.id ?? "uncategorized"}
               category={category}
               products={products}
+              families={productFamilies}
               categoryMap={categoryMap}
               viewHrefFn={(p) => href(locale, `/shop/${p.slug}`)}
               onProductChange={onProductChange}

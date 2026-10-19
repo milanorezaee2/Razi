@@ -14,6 +14,8 @@ import { getNavData } from "@/lib/data/nav";
 import { LOCALES, type Locale } from "@/lib/i18n/types";
 import { dictionaries } from "@/lib/i18n/dictionary";
 import { getCspNonce } from "@/lib/security/nonce";
+import { PublicPwaRegister } from "@/components/pwa/PublicPwaRegister";
+import { PublicPwaInstallPrompt } from "@/components/pwa/PublicPwaInstallPrompt";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,17 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: { default: d?.brand ?? "Rosie Atelier", template: `%s · Rosie Atelier` },
     description: d?.tagline,
+    manifest: locale === "en" ? "/site-manifest-en.webmanifest" : "/site-manifest-fa.webmanifest",
     metadataBase: site ? new URL(site) : undefined,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: d?.brand ?? "Rosie Atelier",
+    },
+    icons: {
+      icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
     openGraph: {
       type: "website",
       siteName: d?.brand ?? "Rosie Atelier",
@@ -71,6 +83,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
         )}
       </head>
       <AppProviders locale={locale}>
+        <PublicPwaRegister />
         <LocaleChrome
           before={
             <Fragment key="before">
@@ -86,6 +99,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           {children}
         </LocaleChrome>
         <LiveChatWidget />
+        <PublicPwaInstallPrompt locale={locale} />
       </AppProviders>
     </>
   );

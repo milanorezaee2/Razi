@@ -36,6 +36,7 @@ import { AssetStatusBadge, bytesLabel } from "@/components/artist/DashboardParts
 import { SignOutButton } from "@/components/profile/SignOutButton";
 import { formatLabel } from "@/lib/marketplace/formats";
 import { familyName } from "@/lib/data/families";
+import { formatInvalidContentRelationsMessage } from "@/lib/admin-content-issues";
 import type { ArtistDashboardData, DashboardWork } from "@/lib/artist/dashboard";
 import type { Locale } from "@/lib/i18n/types";
 import type { ArtistServiceItem, ArtistSubscription, ClientInquiry } from "@/lib/types";
@@ -169,11 +170,18 @@ export function ArtistDashboardView({ locale, data }: { locale: Locale; data: Ar
   const handleDeleteService = async (serviceId: string) => {
     if (!confirm(fa ? "این خدمت از غرفه اختصاصی شما حذف شود؟" : "Delete this service?")) return;
     try {
-      const res = await fetch(`/api/artist/services?id=${serviceId}`, { method: "DELETE" });
-      const d = await res.json();
-      if (d.ok) {
-        setServices((prev) => prev.filter((s) => s.id !== serviceId));
+      const res = await fetch(`/api/artist/services?id=${encodeURIComponent(serviceId)}`, { method: "DELETE" });
+      const d = await res.json().catch(() => null) as {
+        ok?: boolean;
+        error?: string;
+        issues?: { path: string }[];
+      } | null;
+      if (d?.error === "invalid_relationships") {
+        alert(formatInvalidContentRelationsMessage(d.issues, fa ? "fa" : "en"));
+        return;
       }
+      if (!res.ok || !d?.ok) throw new Error("service_delete_failed");
+      setServices((prev) => prev.filter((s) => s.id !== serviceId));
     } catch {
       alert(fa ? "خطا در حذف خدمت." : "Error deleting service.");
     }
@@ -529,7 +537,7 @@ export function ArtistDashboardView({ locale, data }: { locale: Locale; data: Ar
               ) : (
                 <ul className="divide-y divide-border">
                   {data.works.map((work) => (
-                    <WorkRow key={work.id} work={work} locale={locale} />
+                    <WorkRow key={work.id} work={work} locale={locale} productFamilies={data.productFamilies} />
                   ))}
                 </ul>
               )}
@@ -1163,7 +1171,7 @@ function Kpi({
   );
 }
 
-function WorkRow({ work, locale }: { work: DashboardWork; locale: Locale }) {
+function WorkRow({ work, locale, productFamilies }: { work: DashboardWork; locale: Locale; productFamilies: ArtistDashboardData["productFamilies"] }) {
   const fa = locale === "fa";
   const price = work.priceFrom;
 
@@ -1189,7 +1197,7 @@ function WorkRow({ work, locale }: { work: DashboardWork; locale: Locale }) {
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-caption text-foreground-secondary">
-          {work.familyId && <span>{familyName(work.familyId, locale)}</span>}
+          {work.familyId && <span>{familyName(productFamilies, work.familyId, locale)}</span>}
           <span className="inline-flex items-center gap-1.5">
             {work.colourways.map((colourway) => (
               <span

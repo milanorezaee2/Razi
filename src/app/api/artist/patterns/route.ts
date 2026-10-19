@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireArtistOrAdmin as requireApprovedArtistOrAdmin } from "@/lib/marketplace/guard";
 import { getContent, mutateCollection } from "@/lib/data/store";
+import { assertSiteContentRelations, InvalidContentRelationsError } from "@/lib/admin-content-validation";
 import { withNoStore } from "@/lib/http";
 import type { Pattern, Product } from "@/lib/types";
 import crypto from "crypto";
@@ -14,8 +15,8 @@ function withContentEtag(response: NextResponse, etag: string) {
 
 function mutationErrorResponse(error: unknown, operation: string) {
   const code = error instanceof Error ? error.message : "";
-  if (code === "invalid_category") {
-    return NextResponse.json({ ok: false, error: code }, withNoStore({ status: 400 }));
+  if (error instanceof InvalidContentRelationsError) {
+    return NextResponse.json({ ok: false, error: error.message, issues: error.issues }, withNoStore({ status: 422 }));
   }
   if (code === "not_found") {
     return NextResponse.json({ ok: false, error: code }, withNoStore({ status: 404 }));
@@ -106,10 +107,6 @@ export async function POST(req: Request) {
     try {
       const { result: product, etag } = await mutateCollection("products", (products, content) => {
         const categoryId = requestedCategoryId ?? (content.categories[0]?.id ?? "");
-        if (!categoryId || !content.categories.some((category) => category.id === categoryId)) {
-          throw new Error("invalid_category");
-        }
-
         const product: Product = {
           id: productId,
           sku,
@@ -133,7 +130,9 @@ export async function POST(req: Request) {
           isNew: true,
           order: products.length + 1,
         };
-        return { items: [...products, product], result: product };
+        const nextProducts = [...products, product];
+        assertSiteContentRelations({ ...content, products: nextProducts });
+        return { items: nextProducts, result: product };
       });
       return withContentEtag(NextResponse.json({ ok: true, product }, withNoStore()), etag);
     } catch (error) {
@@ -156,10 +155,6 @@ export async function POST(req: Request) {
   try {
     const { result: pattern, etag } = await mutateCollection("patterns", (patterns, content) => {
       const categoryId = requestedCategoryId ?? (content.categories[0]?.id ?? "");
-      if (!categoryId || !content.categories.some((category) => category.id === categoryId)) {
-        throw new Error("invalid_category");
-      }
-
       const pattern: Pattern = {
         id: patternId,
         sku,
@@ -174,6 +169,10 @@ export async function POST(req: Request) {
         categoryId,
         spaceIds: (b.spaceIds as string[]) ?? [],
         artistId,
+        // An artist submission is never public on its own: it waits for an
+        // admin decision. An admin creating the pattern publishes it directly.
+        status: session.role === "admin" ? "published" : "pending_review",
+        submittedAt: createdAt,
         price: (b.price as Pattern["price"]) ?? { fa: 0, en: 0 },
         specs: (b.specs as Pattern["specs"]) ?? {
           repeat: { fa: "تکرار کامل", en: "Full repeat" },
@@ -192,7 +191,9 @@ export async function POST(req: Request) {
         createdAt,
         likes: 0,
       };
-      return { items: [...patterns, pattern], result: pattern };
+      const nextPatterns = [...patterns, pattern];
+      assertSiteContentRelations({ ...content, patterns: nextPatterns });
+      return { items: nextPatterns, result: pattern };
     });
     return withContentEtag(NextResponse.json({ ok: true, pattern }, withNoStore()), etag);
   } catch (error) {
@@ -211,16 +212,23 @@ export async function PUT(req: Request) {
 
   if (body._type === "product") {
     try {
-      const { result: product, etag } = await mutateCollection("products", (products) => {
+      const { result: product, etag } = await mutateCollection("products", (products, content) => {
         const index = products.findIndex((item) => item.id === body.id);
         if (index < 0) throw new Error("not_found");
-        if (session.role !== "admin" && products[index].artistId !== session.artistId) {
+        const current = products[index];
+        if (session.role !== "admin" && current.artistId !== session.artistId) {
           throw new Error("forbidden");
         }
 
-        const updated: Product = { ...products[index], ...body } as Product;
+        const updated: Product = { ...current, ...body } as Product;
+        if (session.role !== "admin") {
+          updated.artistId = current.artistId;
+          const linkedPattern = updated.patternId ? content.patterns.find((pattern) => pattern.id === updated.patternId) : null;
+          if (linkedPattern && linkedPattern.artistId !== session.artistId) throw new Error("forbidden");
+        }
         const nextProducts = [...products];
         nextProducts[index] = updated;
+        assertSiteContentRelations({ ...content, products: nextProducts });
         return { items: nextProducts, result: updated };
       });
       return withContentEtag(NextResponse.json({ ok: true, product }, withNoStore()), etag);
@@ -230,16 +238,36 @@ export async function PUT(req: Request) {
   }
 
   try {
-    const { result: pattern, etag } = await mutateCollection("patterns", (patterns) => {
+    const { result: pattern, etag } = await mutateCollection("patterns", (patterns, content) => {
       const index = patterns.findIndex((item) => item.id === body.id);
       if (index < 0) throw new Error("not_found");
       if (session.role !== "admin" && patterns[index].artistId !== session.artistId) {
         throw new Error("forbidden");
       }
 
-      const updated: Pattern = { ...patterns[index], ...body } as Pattern;
+      const current = patterns[index];
+      const updated: Pattern = { ...current, ...body } as Pattern;
+
+      if (session.role !== "admin") {
+        // The artist may edit their pattern's content, but cannot change its
+        // owner or editorial fields by sending extra properties in the request.
+        updated.artistId = current.artistId;
+        updated.status = current.status ?? "published";
+        updated.rejectionNote = current.rejectionNote;
+        updated.submittedAt = current.submittedAt;
+
+        // Revising a draft or rejected pattern counts as a resubmission.
+        // Keep it out of the public catalogue until the admin reviews it again.
+        if (current.status === "draft" || current.status === "rejected") {
+          updated.status = "pending_review";
+          updated.rejectionNote = undefined;
+          updated.submittedAt = new Date().toISOString();
+        }
+      }
+
       const nextPatterns = [...patterns];
       nextPatterns[index] = updated;
+      assertSiteContentRelations({ ...content, patterns: nextPatterns });
       return { items: nextPatterns, result: updated };
     });
     return withContentEtag(NextResponse.json({ ok: true, pattern }, withNoStore()), etag);
@@ -261,11 +289,13 @@ export async function DELETE(req: Request) {
 
   if (type === "product") {
     try {
-      const { etag } = await mutateCollection("products", (products) => {
+      const { etag } = await mutateCollection("products", (products, content) => {
         const item = products.find((product) => product.id === id);
         if (!item) throw new Error("not_found");
         if (session.role !== "admin" && item.artistId !== session.artistId) throw new Error("forbidden");
-        return { items: products.filter((product) => product.id !== id), result: undefined };
+        const nextProducts = products.filter((product) => product.id !== id);
+        assertSiteContentRelations({ ...content, products: nextProducts });
+        return { items: nextProducts, result: undefined };
       });
       return withContentEtag(NextResponse.json({ ok: true }, withNoStore()), etag);
     } catch (error) {
@@ -274,11 +304,13 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const { etag } = await mutateCollection("patterns", (patterns) => {
+    const { etag } = await mutateCollection("patterns", (patterns, content) => {
       const item = patterns.find((pattern) => pattern.id === id);
       if (!item) throw new Error("not_found");
       if (session.role !== "admin" && item.artistId !== session.artistId) throw new Error("forbidden");
-      return { items: patterns.filter((pattern) => pattern.id !== id), result: undefined };
+      const nextPatterns = patterns.filter((pattern) => pattern.id !== id);
+      assertSiteContentRelations({ ...content, patterns: nextPatterns });
+      return { items: nextPatterns, result: undefined };
     });
     return withContentEtag(NextResponse.json({ ok: true }, withNoStore()), etag);
   } catch (error) {

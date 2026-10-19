@@ -10,12 +10,13 @@ import type { LedgerEntry, Payout, PayoutProfile, PayoutStatus, PricePair } from
 /**
  * Artist payouts.
  *
- *   request → approved → paid          (or rejected, which releases the hold)
+ *   request → approved → paid (internal marker after manual off-app confirmation)
+ *                └──────────→ rejected (releases the hold)
  *
  * `requestPayout()` refuses to overdraw: the artist's *available* balance is
- * derived from the append-only ledger minus payouts already requested/paid, and
- * the request stores the balance snapshot it was validated against so the
- * decision is auditable later.
+ * derived from the append-only ledger minus payouts already requested/recorded,
+ * and the request stores the balance snapshot it was validated against so the
+ * decision is auditable later. No automatic bank-transfer provider is connected.
  */
 
 export async function getPayoutProfiles(): Promise<PayoutProfile[]> {
@@ -172,8 +173,22 @@ export async function requestPayout(input: {
 }
 
 export type PayoutDecisionResult =
-  | { ok: true; payout: Payout; statusChanged: boolean }
-  | { ok: false; error: "not_found" | "invalid_transition" };
+  | { ok: true; payout: Payout; statusChanged: boolean; manualConfirmationRecorded: boolean }
+  | {
+      ok: false;
+      error: "not_found" | "invalid_transition" | "transfer_evidence_required" | "manual_transfer_confirmation_required";
+    };
+
+/** A paid payout is only ledger-eligible when an operator explicitly confirmed the off-app transfer and its evidence is stored. */
+function hasRecordedManualTransferConfirmation(payout: Payout): boolean {
+  return payout.status === "paid"
+    && payout.settlementMode === "manual"
+    && payout.manualTransferConfirmed === true
+    && Boolean(payout.manualTransferConfirmedAt)
+    && Boolean(payout.manualTransferConfirmedBy?.trim())
+    && Boolean(payout.reference?.trim())
+    && Boolean(payout.paymentEvidence?.trim());
+}
 
 export async function decidePayout(input: {
   id: string;
@@ -181,6 +196,9 @@ export async function decidePayout(input: {
   decidedBy: string;
   reference?: string;
   note?: string;
+  paymentEvidence?: string;
+  /** Must be true when an admin records or corrects a manual, off-app transfer. */
+  manualTransferConfirmed?: boolean;
 }): Promise<PayoutDecisionResult> {
   const decision = await mutateCollection<Payout, PayoutDecisionResult>(KEYS.payouts, (items) => {
     const index = items.findIndex((item) => item.id === input.id);
@@ -194,32 +212,63 @@ export async function decidePayout(input: {
         : false;
     if (statusChanged && !allowed) return { result: { ok: false, error: "invalid_transition" } };
 
-    const reference = input.reference ?? payout.reference;
+    const reference = input.reference?.replace(/[\r\n\u0000]/g, " ").trim().slice(0, 200) || payout.reference;
+    const paymentEvidence = input.paymentEvidence?.replace(/[\r\n\u0000]/g, " ").trim().slice(0, 1_000) || payout.paymentEvidence;
+    if (input.status === "paid" && (!reference || !paymentEvidence)) {
+      return { result: { ok: false, error: "transfer_evidence_required" } };
+    }
+
+    const alreadyConfirmed = hasRecordedManualTransferConfirmation(payout);
+    const transferDetailsChanged = reference !== payout.reference || paymentEvidence !== payout.paymentEvidence;
+    const manualConfirmationRecorded = input.status === "paid" && (!alreadyConfirmed || transferDetailsChanged);
+    if (manualConfirmationRecorded && input.manualTransferConfirmed !== true) {
+      return { result: { ok: false, error: "manual_transfer_confirmation_required" } };
+    }
+
     const note = input.note ?? payout.note;
-    const metadataChanged = reference !== payout.reference || note !== payout.note;
-    if (!statusChanged && !metadataChanged) return { result: { ok: true, payout, statusChanged: false } };
+    const settlementMode = input.status === "paid" ? "manual" : payout.settlementMode;
+    const manualTransferConfirmed = input.status === "paid" ? true : payout.manualTransferConfirmed;
+    const auditAt = statusChanged || manualConfirmationRecorded ? new Date().toISOString() : undefined;
+    const manualTransferConfirmedAt = manualConfirmationRecorded ? auditAt : payout.manualTransferConfirmedAt;
+    const manualTransferConfirmedBy = manualConfirmationRecorded ? input.decidedBy : payout.manualTransferConfirmedBy;
+    const metadataChanged = reference !== payout.reference
+      || paymentEvidence !== payout.paymentEvidence
+      || note !== payout.note
+      || settlementMode !== payout.settlementMode
+      || manualTransferConfirmed !== payout.manualTransferConfirmed
+      || manualTransferConfirmedAt !== payout.manualTransferConfirmedAt
+      || manualTransferConfirmedBy !== payout.manualTransferConfirmedBy;
+    if (!statusChanged && !metadataChanged) {
+      return { result: { ok: true, payout, statusChanged: false, manualConfirmationRecorded: false } };
+    }
 
     const updated: Payout = {
       ...payout,
       status: input.status,
-      decidedAt: statusChanged ? new Date().toISOString() : payout.decidedAt,
-      decidedBy: statusChanged ? input.decidedBy : payout.decidedBy,
+      decidedAt: auditAt ?? payout.decidedAt,
+      decidedBy: auditAt ? input.decidedBy : payout.decidedBy,
       reference,
       note,
-      ...(input.status === "paid" && !payout.paidAt ? { paidAt: new Date().toISOString() } : {}),
+      paymentEvidence,
+      settlementMode,
+      manualTransferConfirmed,
+      manualTransferConfirmedAt,
+      manualTransferConfirmedBy,
+      ...(input.status === "paid" && !payout.paidAt ? { paidAt: auditAt ?? new Date().toISOString() } : {}),
     };
     const next = items.slice();
     next[index] = updated;
-    return { next, result: { ok: true, payout: updated, statusChanged } };
+    return { next, result: { ok: true, payout: updated, statusChanged, manualConfirmationRecorded } };
   });
 
   if (!decision.ok) return decision;
 
   /*
-   * Keep the payout ledger entry idempotent: retrying a paid decision repairs
-   * a missing entry after an interrupted write without adding a second debit.
+   * Keep the payout ledger entry idempotent. It is created/repaired only after
+   * the manual off-app transfer, operator attestation, reference and evidence
+   * are all present on the payout record.
    */
-  if (decision.payout.status === "paid") {
+  if (hasRecordedManualTransferConfirmation(decision.payout)) {
     await mutateCollection<LedgerEntry, void>(KEYS.ledger, (items) => {
       if (items.some((entry) => entry.kind === "payout" && entry.payoutId === decision.payout.id)) {
         return { result: undefined };
@@ -234,7 +283,10 @@ export async function decidePayout(input: {
             kind: "payout",
             amount: { fa: -decision.payout.amount.fa, en: -decision.payout.amount.en },
             payoutId: decision.payout.id,
-            note: { fa: "تسویه انجام‌شده", en: "Payout settled" },
+            note: {
+              fa: `تأیید دستی انتقال بانکی خارج از برنامه${decision.payout.reference ? ` · ${decision.payout.reference}` : ""}`,
+              en: `Operator-confirmed off-app bank transfer${decision.payout.reference ? ` · ${decision.payout.reference}` : ""}`,
+            },
             createdAt: new Date().toISOString(),
           } satisfies LedgerEntry,
         ],
@@ -247,15 +299,16 @@ export async function decidePayout(input: {
 }
 
 export function payoutSummary(payouts: Payout[]) {
-  const sum = (statuses: PayoutStatus[]) =>
+  const sum = (predicate: (payout: Payout) => boolean) =>
     payouts
-      .filter((payout) => statuses.includes(payout.status))
+      .filter(predicate)
       .reduce((acc, payout) => addPrice(acc, payout.amount), ZERO_PRICE);
   return {
-    requested: sum(["requested"]),
-    approved: sum(["approved"]),
-    paid: sum(["paid"]),
-    rejected: sum(["rejected"]),
+    requested: sum((payout) => payout.status === "requested"),
+    approved: sum((payout) => payout.status === "approved"),
+    manualTransferConfirmed: sum(hasRecordedManualTransferConfirmation),
+    needsReconciliation: sum((payout) => payout.status === "paid" && !hasRecordedManualTransferConfirmation(payout)),
+    rejected: sum((payout) => payout.status === "rejected"),
     count: payouts.length,
   };
 }

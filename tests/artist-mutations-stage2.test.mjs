@@ -30,6 +30,8 @@ async function loadContentStore() {
     if (specifier === "server-only") return {};
     if (specifier === "./seed") return { seedContent };
     if (specifier === "@/lib/media-storage") return { rewriteLegacyMediaUrls: (content) => content };
+    if (specifier === "@/lib/admin-content-validation") return { assertSiteContentRelations: () => {} };
+    if (specifier === "../pattern-status") return { backfillLegacyPatternStatuses: (patterns = []) => patterns.map((pattern) => pattern.status ? pattern : { ...pattern, status: "published" }) };
     if (specifier === "./razieh-textile-portfolio") {
       return { RAZIEH_TEXTILE_CATEGORY: {}, RAZIEH_TEXTILE_PORTFOLIO: {} };
     }
@@ -112,6 +114,11 @@ test("artist collection writers use atomic mutations rather than stale full-docu
     assert.match(source, /mutateCollection\(/, `${route} should mutate the latest collection`);
     assert.doesNotMatch(source, /\b(?:saveContent|updateCollection)\s*\(/, `${route} should not write a stale snapshot`);
   }
+
+  const artistServices = read("src/app/api/artist/services/route.ts");
+  assert.match(artistServices, /assertNoNewContentRelationIssues\(content, \{ \.\.\.content, artists: nextArtists \}\)/);
+  assert.match(artistServices, /InvalidContentRelationsError/);
+  assert.match(artistServices, /status: 422/);
 
   const webinarSignal = read("src/app/api/webinar/[slug]/signal/route.ts");
   assert.match(webinarSignal, /saveContent\(\{ \.\.\.content, education \}, etag\)/,

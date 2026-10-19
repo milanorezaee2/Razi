@@ -404,7 +404,7 @@ async function drawAgreementPage(ctx: Ctx, input: CertificateInput) {
         ["5. Verification", "Authenticity can be checked at any time with the certificate number or the QR code on page 1."],
         [
           "6. Revocation & refunds",
-          "Rosie Atelier may revoke a license in case of breach. Digital goods are non-refundable after download unless the file is proven defective.",
+          "Rosie Atelier may revoke a license in case of breach. Digital goods are non-refundable after download unless the file is proven defective and a refund is approved. Any approved refund is processed manually outside the app; the app records operator confirmation but does not transfer funds.",
         ],
       ];
 

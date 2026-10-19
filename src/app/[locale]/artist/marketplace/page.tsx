@@ -5,6 +5,8 @@ import { ArtistStudio } from "@/components/marketplace/ArtistStudio";
 import { SignOutButton } from "@/components/profile/SignOutButton";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { getArtistApprovalStatus } from "@/lib/artist/access";
+import { getContent } from "@/lib/data/store";
+import { orderedProductFamilies } from "@/lib/data/families";
 import { getSession } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n/types";
 import { href } from "@/lib/utils";
@@ -52,6 +54,7 @@ export default async function ArtistStudioPage({ params }: { params: Promise<{ l
 
   const approval = await getArtistApprovalStatus(session);
   if (approval !== "approved") return <ArtistApprovalNotice locale={locale} status={approval} />;
+  const content = await getContent();
 
   return (
     <div className="container-x pt-[calc(var(--header-h)+1.5rem)] pb-24">
@@ -76,7 +79,7 @@ export default async function ArtistStudioPage({ params }: { params: Promise<{ l
         <SignOutButton />
       </div>
       <div className="mt-10">
-        <ArtistStudio locale={locale} />
+        <ArtistStudio locale={locale} productFamilies={orderedProductFamilies(content.productFamilies)} />
       </div>
     </div>
   );

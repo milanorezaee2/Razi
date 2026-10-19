@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, Layers, Sparkles, Truck } from "lucide-react";
 import { Badge, Sku } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { familyName } from "@/lib/data/families";
+import { familyName, type ProductFamily } from "@/lib/data/families";
 import type { Locale } from "@/lib/i18n/types";
 import type { EnrichedProduct } from "@/lib/data/queries";
 import { contentHref, faNum, formatPrice, href, isExternalContentHref, t } from "@/lib/utils";
@@ -24,6 +24,7 @@ interface Props {
   /** every product of the shop — the hero picks its tiles from them */
   products: EnrichedProduct[];
   families: ShopFamilyChip[];
+  productFamilies: ProductFamily[];
   brand: string;
   labels: {
     siteExclusive: string;
@@ -55,7 +56,7 @@ interface Props {
  * Only the hero changes; the shop itself (filters, sorting, sections) is
  * rendered by `ShopFiltered` exactly as before.
  */
-export function ShopHero({ locale, eyebrow, title, description, products, families, brand, labels, banners = [] }: Props) {
+export function ShopHero({ locale, eyebrow, title, description, products, families, productFamilies, brand, labels, banners = [] }: Props) {
   const fa = locale === "fa";
   const num = (n: number) => (fa ? faNum(n) : String(n));
 
@@ -148,7 +149,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
 
             <div className="absolute inset-x-0 bottom-0 p-5 text-white">
               <p className="text-caption text-white/70">
-                {familyName(lead.familyId, locale) || labels.studio} · {makerOf(lead)}
+                {familyName(productFamilies, lead.familyId, locale) || labels.studio} · {makerOf(lead)}
               </p>
               <p className="mt-1 font-display text-h3">{t(lead.title, locale)}</p>
               <div className="mt-3 flex items-center justify-between gap-3">
@@ -174,7 +175,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-white">
               <div className="min-w-0">
-                <p className="truncate text-caption text-white/70">{familyName(second.familyId, locale) || labels.studio}</p>
+                <p className="truncate text-caption text-white/70">{familyName(productFamilies, second.familyId, locale) || labels.studio}</p>
                 <p className="mt-0.5 truncate font-display text-h4">{t(second.title, locale)}</p>
               </div>
               <span className="shrink-0 text-sm font-semibold tabular">{formatPrice(second.price, locale)}</span>

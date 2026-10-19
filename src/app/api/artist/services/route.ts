@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { requireArtistOrAdmin as requireApprovedArtistOrAdmin } from "@/lib/marketplace/guard";
 import { getContent, mutateCollection } from "@/lib/data/store";
+import { assertNoNewContentRelationIssues, InvalidContentRelationsError } from "@/lib/admin-content-validation";
 import { withNoStore } from "@/lib/http";
 import type { ArtistServiceItem } from "@/lib/types";
 
@@ -13,6 +14,9 @@ function withContentEtag(response: NextResponse, etag: string) {
 }
 
 function mutationErrorResponse(error: unknown, operation: string) {
+  if (error instanceof InvalidContentRelationsError) {
+    return NextResponse.json({ ok: false, error: error.message, issues: error.issues }, withNoStore({ status: 422 }));
+  }
   if (error instanceof Error && error.message === "artist_not_found") {
     return NextResponse.json({ ok: false, error: "artist_not_found" }, withNoStore({ status: 404 }));
   }
@@ -160,13 +164,14 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const { result: services, etag } = await mutateCollection("artists", (artists) => {
+    const { result: services, etag } = await mutateCollection("artists", (artists, content) => {
       const index = artists.findIndex((artist) => artist.id === session.artistId || artist.userId === session.id);
       if (index < 0) throw new Error("artist_not_found");
 
       const services = (artists[index].services ?? []).filter((service) => service.id !== serviceId);
       const nextArtists = [...artists];
       nextArtists[index] = { ...artists[index], services };
+      assertNoNewContentRelationIssues(content, { ...content, artists: nextArtists });
       return { items: nextArtists, result: services };
     });
     return withContentEtag(NextResponse.json({ ok: true, services }, withNoStore()), etag);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth";
 import { getContent, mutateContent } from "@/lib/data/store";
 import { getAllUsers, saveAllUsers } from "@/lib/data/users";
+import { assertNoNewContentRelationIssues, InvalidContentRelationsError } from "@/lib/admin-content-validation";
 import { withNoStore } from "@/lib/http";
 import type { Artist, ArtistStatus } from "@/lib/types";
 
@@ -121,14 +122,19 @@ export async function DELETE(req: Request) {
     mutation = await mutateContent((content) => {
       const artist = content.artists.find((item) => item.id === id);
       if (!artist) throw new Error("artist_not_found");
-      return {
-        content: { ...content, artists: content.artists.filter((item) => item.id !== id) },
-        result: artist,
-      };
+      const nextContent = { ...content, artists: content.artists.filter((item) => item.id !== id) };
+      assertNoNewContentRelationIssues(content, nextContent);
+      return { content: nextContent, result: artist };
     });
   } catch (error) {
     if (error instanceof Error && error.message === "artist_not_found") {
       return NextResponse.json({ ok: false, error: "not_found" }, withNoStore({ status: 404 }));
+    }
+    if (error instanceof InvalidContentRelationsError) {
+      return NextResponse.json(
+        { ok: false, error: error.message, issues: error.issues },
+        withNoStore({ status: 422 }),
+      );
     }
     console.error("[admin/artists] content delete failed:", error);
     return NextResponse.json({ ok: false, error: "content_update_failed" }, withNoStore({ status: 502 }));

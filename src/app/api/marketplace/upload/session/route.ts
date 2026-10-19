@@ -11,7 +11,8 @@ import { presignUpload, stagingPartKey } from "@/lib/marketplace/storage";
 import { formatAcceptError, normaliseColourwayId } from "@/lib/marketplace/upload-rules";
 import { fail, json, readJson, requireArtistOrAdmin } from "@/lib/marketplace/guard";
 import { clientIp, recordAttempt, tooManyAttempts } from "@/lib/rate-limit";
-import { isFamilyId } from "@/lib/data/families";
+import { getContent } from "@/lib/data/store";
+import { withProductFamilyLock } from "@/lib/product-family-lock";
 import { EXPORT_FORMAT_IDS, detectFormat, isExportFormatId, minUploadBytes } from "@/lib/marketplace/formats";
 import type { UploadSession } from "@/lib/marketplace/types";
 
@@ -56,9 +57,13 @@ export async function POST(request: Request) {
   }>(request);
 
   if (!body?.filename || !body.mime || !body.sizeBytes) return fail("invalid_payload");
-  /* Every work must be filed under a real product family — see `lib/data/families.ts`. */
-  if (!isFamilyId(body.familyId)) return fail("invalid_family", 400);
-  if (body.sizeBytes > MAX_MASTER_BYTES) {
+  /* The submitted family is checked against the current persisted taxonomy below. */
+  if (typeof body.familyId !== "string" || !body.familyId.trim()) return fail("invalid_family", 400);
+  const filename = body.filename;
+  const mime = body.mime;
+  const sizeBytes = body.sizeBytes;
+  const familyId = body.familyId;
+  if (sizeBytes > MAX_MASTER_BYTES) {
     return fail("file_too_large", 413, { maxBytes: MAX_MASTER_BYTES });
   }
 
@@ -88,36 +93,41 @@ export async function POST(request: Request) {
   }
 
   try {
-    const session = await createUploadSession({
-      userId: auth.user.id,
-      artistId: auth.user.artistId ?? null,
-      filename: body.filename,
-      mime: body.mime,
-      sizeBytes: body.sizeBytes,
-      formatId: declaredFormat as UploadSession["formatId"],
-      colourwayId: normaliseColourwayId(body.colourwayId),
-      colourway: body.colourway
-        ? {
-            name: {
-              fa: body.colourway.name?.fa?.trim() || "رنگ جدید",
-              en: body.colourway.name?.en?.trim() || "New colour",
-            },
-            hex: body.colourway.hex ?? "#0f172a",
-          }
-        : null,
-      attachToAssetId: body.attachToAssetId ?? null,
-      meta: {
-        title: {
-          fa: body.title?.fa?.trim() || body.filename,
-          en: body.title?.en?.trim() || body.filename,
+    const session = await withProductFamilyLock(async () => {
+      const content = await getContent();
+      if (!content.productFamilies.some((family) => family.id === familyId)) return null;
+      return createUploadSession({
+        userId: auth.user.id,
+        artistId: auth.user.artistId ?? null,
+        filename,
+        mime,
+        sizeBytes,
+        formatId: declaredFormat as UploadSession["formatId"],
+        colourwayId: normaliseColourwayId(body.colourwayId),
+        colourway: body.colourway
+          ? {
+              name: {
+                fa: body.colourway.name?.fa?.trim() || "رنگ جدید",
+                en: body.colourway.name?.en?.trim() || "New colour",
+              },
+              hex: body.colourway.hex ?? "#0f172a",
+            }
+          : null,
+        attachToAssetId: body.attachToAssetId ?? null,
+        meta: {
+          title: {
+            fa: body.title?.fa?.trim() || filename,
+            en: body.title?.en?.trim() || filename,
+          },
+          description: { fa: body.description?.fa ?? "", en: body.description?.en ?? "" },
+          kind: body.kind ?? "pattern",
+          tags: body.tags ?? [],
+          familyId: familyId,
+          patternId: body.patternId ?? null,
         },
-        description: { fa: body.description?.fa ?? "", en: body.description?.en ?? "" },
-        kind: body.kind ?? "pattern",
-        tags: body.tags ?? [],
-        familyId: body.familyId,
-        patternId: body.patternId ?? null,
-      },
+      });
     });
+    if (!session) return fail("invalid_family", 400);
 
     const totalParts = session.mode === "multipart" ? Math.ceil(session.sizeBytes / MULTIPART_PART_SIZE) : 1;
     const provider = storageProvider();

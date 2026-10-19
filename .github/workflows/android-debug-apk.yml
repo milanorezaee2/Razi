@@ -1,0 +1,57 @@
+name: Android debug APK
+
+on:
+  push:
+    branches:
+      - arena/18302fe2-razi
+  workflow_dispatch:
+    inputs:
+      site_url:
+        description: "Deployed HTTPS site origin used by the Android app"
+        required: false
+        default: "https://rosieatelier.com"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android API 35 build tools
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build installable debug APK
+        run: npm run android:apk:debug
+        env:
+          CAPACITOR_SERVER_URL: ${{ inputs.site_url || 'https://rosieatelier.com' }}
+
+      - name: Publish APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rosie-atelier-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

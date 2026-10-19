@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatInvalidContentRelationsMessage } from "@/lib/admin-content-issues";
 import { SESSION_FETCH } from "@/lib/http";
 import type { Artist } from "@/lib/types";
 import type { AdminContentMutation } from "@/lib/admin-content-mutation";
@@ -460,6 +461,7 @@ export function UsersManager({
     const prev = users.find((u) => u.id === id);
     setUsers((us) => us.filter((u) => u.id !== id));
     setSelected((s) => { const n = new Set(s); n.delete(id); return n; });
+    let relationBlockMessage: string | null = null;
     try {
       const r = await fetch("/api/admin/users", {
         ...SESSION_FETCH,
@@ -467,7 +469,15 @@ export function UsersManager({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      const result = await r.json().catch(() => null) as { ok?: boolean; removedArtistIds?: string[] } | null;
+      const result = await r.json().catch(() => null) as {
+        ok?: boolean;
+        error?: string;
+        issues?: { path: string }[];
+        removedArtistIds?: string[];
+      } | null;
+      if (result?.error === "invalid_relationships") {
+        relationBlockMessage = formatInvalidContentRelationsMessage(result.issues);
+      }
       if (!r.ok || !result?.ok) throw new Error();
       if (result.removedArtistIds?.length) {
         onContentMutation({
@@ -478,7 +488,7 @@ export function UsersManager({
       showToast("کاربر حذف شد");
     } catch {
       if (prev) setUsers((us) => [...us, prev]);
-      showToast("خطا در حذف کاربر", false);
+      showToast(relationBlockMessage ?? "خطا در حذف کاربر", false);
     }
   };
 

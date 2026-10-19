@@ -17,7 +17,7 @@ export function InquiryForm({ kind, options }: { kind: "b2b" | "custom" | "conta
     const fd = new FormData(e.currentTarget);
     setState("loading");
     try {
-      const r = await fetch("/api/contact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind, ...Object.fromEntries(fd) }) });
+      const r = await fetch("/api/contact", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind, locale, ...Object.fromEntries(fd) }) });
       const j = await r.json();
       if (!r.ok) throw new Error();
       setId(j.id);
@@ -39,7 +39,11 @@ export function InquiryForm({ kind, options }: { kind: "b2b" | "custom" | "conta
           <Select name="type">{options.map((o) => <option key={o}>{o}</option>)}</Select>
         </Field>
       )}
-      <div className="sm:col-span-2"><Field label={fa ? "توضیحات" : "Details"}><Textarea name="message" required placeholder={fa ? "درباره‌ی فضا، متراژ، زمان‌بندی و بودجه‌ی تقریبی بنویسید…" : "Tell us about the space, size, timeline and rough budget…"} /></Field></div>
+      <div className="sm:col-span-2"><Field label={fa ? "توضیحات" : "Details"}><Textarea name="message" required minLength={5} maxLength={5000} placeholder={fa ? "درباره‌ی فضا، متراژ، زمان‌بندی و بودجه‌ی تقریبی بنویسید…" : "Tell us about the space, size, timeline and rough budget…"} /></Field></div>
+      <label className="sm:col-span-2 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-foreground-secondary">
+        <input name="consent" value="yes" type="checkbox" required className="mt-0.5 accent-accent" />
+        <span>{fa ? "با ثبت این فرم، با استفاده از اطلاعاتم برای پاسخ‌گویی به این درخواست موافقم." : "I agree that my details may be used to respond to this request."}</span>
+      </label>
       {state === "error" && <div className="sm:col-span-2"><ErrorState /></div>}
       <div className="sm:col-span-2"><Button type="submit" size="lg" disabled={state === "loading"}>{dict.common.submit}</Button></div>
     </form>

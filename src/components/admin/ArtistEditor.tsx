@@ -8,6 +8,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { slugify } from "@/lib/utils";
 import { validateArtistServices } from "@/lib/admin-editor-validation";
 import type { Artist, ArtistServiceItem } from "@/lib/types";
+import type { ProductFamily } from "@/lib/data/families";
 import type { Locale, Localized } from "@/lib/i18n/types";
 
 const SERVICE_CATEGORIES: { id: ArtistServiceItem["category"]; label: string }[] = [
@@ -66,12 +67,14 @@ function createService(): ArtistServiceItem {
 export function ArtistEditor({
   artist,
   artists,
+  families,
   locale,
   onSave,
   onClose,
 }: {
   artist: Artist;
   artists: Artist[];
+  families: ProductFamily[];
   locale: Locale;
   onSave: (artist: Artist) => void;
   onClose: () => void;
@@ -84,6 +87,7 @@ export function ArtistEditor({
     location: { ...artist.location },
     social: { ...artist.social },
     tags: [...(artist.tags ?? [])],
+    signupFamilies: [...(artist.signupFamilies ?? [])],
     licenseNote: artist.licenseNote ? { ...artist.licenseNote } : { fa: "", en: "" },
     commissionNotice: artist.commissionNotice ? { ...artist.commissionNotice } : { fa: "", en: "" },
     services: artist.services?.map((service) => ({
@@ -102,6 +106,8 @@ export function ArtistEditor({
     Object.fromEntries((artist.services ?? []).map((service) => [service.id, (service.gallery ?? []).join("\n")])),
   );
   const [error, setError] = useState("");
+  const knownFamilyIds = new Set(families.map((family) => family.id));
+  const legacySignupFamilies = (form.signupFamilies ?? []).filter((id) => !knownFamilyIds.has(id));
 
   const set = <K extends keyof Artist>(key: K, value: Artist[K]) => setForm((current) => ({ ...current, [key]: value }));
   const updateService = (serviceId: string, patch: Partial<ArtistServiceItem>) => {
@@ -211,6 +217,38 @@ export function ArtistEditor({
           </section>
 
           <section className="space-y-3 border-t border-border pt-5">
+            <h3 className="text-sm font-semibold">حوزه‌های کاری اعلام‌شده در ثبت‌نام</h3>
+            <p className="text-xs leading-5 text-muted">برای حفظ ارجاع‌های taxonomy، خانواده‌های انتخاب‌شده در درخواست فروشندگی را در صورت نیاز به گزینه‌های فعال منتقل کنید.</p>
+            {families.length ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {families.map((family) => (
+                  <label key={family.id} className="flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={(form.signupFamilies ?? []).includes(family.id)}
+                      onChange={(event) => set("signupFamilies", event.target.checked
+                        ? [...new Set([...(form.signupFamilies ?? []), family.id])]
+                        : (form.signupFamilies ?? []).filter((id) => id !== family.id))}
+                      className="accent-accent"
+                    />
+                    <span>{family.name.fa}</span><span className="ms-auto text-xs text-muted" dir="ltr">{family.name.en}</span>
+                  </label>
+                ))}
+              </div>
+            ) : <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted">ابتدا در پنل خانوادهٔ محصول تعریف کنید.</p>}
+            {legacySignupFamilies.length > 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                <p>شناسه‌های قدیمی دیگر در taxonomy نیستند؛ برای رفع ارجاع آن‌ها را پاک کنید:</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {legacySignupFamilies.map((id) => (
+                    <button key={id} type="button" onClick={() => set("signupFamilies", (form.signupFamilies ?? []).filter((item) => item !== id))} className="rounded-full border border-amber-300 bg-white px-2.5 py-1 font-mono">حذف {id}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3 border-t border-border pt-5">
             <h3 className="text-sm font-semibold">لینک‌ها، تگ‌ها و آمار عمومی</h3>
             <div className="grid gap-3 sm:grid-cols-3"><Field label="Instagram"><Input dir="ltr" value={form.social.instagram ?? ""} onChange={(event) => set("social", { ...form.social, instagram: event.target.value })} /></Field><Field label="Behance"><Input dir="ltr" value={form.social.behance ?? ""} onChange={(event) => set("social", { ...form.social, behance: event.target.value })} /></Field><Field label="وب‌سایت"><Input dir="ltr" type="url" value={form.social.website ?? ""} onChange={(event) => set("social", { ...form.social, website: event.target.value })} /></Field></div>
             <Field label="تگ‌ها (هر تگ در یک خط یا با ویرگول)"><Textarea dir="ltr" rows={2} value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="botanical, surface design" /></Field>
@@ -246,7 +284,7 @@ export function ArtistEditor({
             ))}
           </section>
 
-          <p className="rounded-lg bg-background-secondary p-3 text-xs leading-5 text-muted">اطلاعات ثبت‌نام، شناسهٔ حساب، وضعیت تأیید، اشتراک و پیام‌های مشتری در این فرم تغییر نمی‌کنند.</p>
+          <p className="rounded-lg bg-background-secondary p-3 text-xs leading-5 text-muted">شناسهٔ حساب، وضعیت تأیید، اشتراک و پیام‌های مشتری در این فرم تغییر نمی‌کنند؛ علایق خانواده‌ای ثبت‌شده فقط برای حفظ ارتباط با taxonomy قابل اصلاح است.</p>
           {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         </div>
         <footer className="flex items-center justify-end gap-2 border-t border-border bg-white px-4 py-3 sm:px-5"><Button type="button" size="sm" variant="outline" onClick={onClose}>انصراف</Button><Button type="button" size="sm" onClick={save}>ذخیرهٔ پروفایل</Button></footer>

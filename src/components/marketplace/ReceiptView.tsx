@@ -20,6 +20,7 @@ interface ReceiptLicense {
   id: string;
   serial: string;
   assetId: string;
+  status: string;
   title: { fa: string; en: string } | string;
   licenseKind: string;
   exclusive: boolean;
@@ -31,11 +32,15 @@ interface ReceiptData {
   order: {
     id: string;
     status: string;
+    refundMode?: "manual";
+    manualRefundConfirmed?: boolean;
+    refundReference?: string;
+    refundedAt?: string;
     subtotal?: { fa: number; en: number };
-  discount?: { fa: number; en: number };
-  tax?: { fa: number; en: number };
-  couponCode?: string | null;
-  total: { fa: number; en: number };
+    discount?: { fa: number; en: number };
+    tax?: { fa: number; en: number };
+    couponCode?: string | null;
+    total: { fa: number; en: number };
     charge: { currency: "IRT" | "USD"; amount: number };
     paidAt?: string;
     provider?: string;
@@ -64,19 +69,29 @@ export function ReceiptView({ initial }: { initial: ReceiptData }) {
   }
 
   const paid = data.order.status === "paid";
+  const refunded = data.order.status === "refunded";
+  const manualRefundConfirmed = data.order.refundMode === "manual" && data.order.manualRefundConfirmed === true;
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className={`rounded-2xl border p-6 ${paid ? "border-success/40 bg-success/5" : "border-warning/40 bg-warning/5"}`}>
+      <div className={`rounded-2xl border p-6 ${paid ? "border-success/40 bg-success/5" : refunded ? "border-error/40 bg-error/5" : "border-warning/40 bg-warning/5"}`}>
         <p className="flex items-center gap-2 font-display text-h3">
-          {paid ? <BadgeCheck className="h-5 w-5 text-success" /> : <AlertTriangle className="h-5 w-5 text-warning" />}
+          {paid
+            ? <BadgeCheck className="h-5 w-5 text-success" />
+            : refunded
+              ? <AlertTriangle className="h-5 w-5 text-error" />
+              : <AlertTriangle className="h-5 w-5 text-warning" />}
           {paid
             ? fa
               ? "پرداخت با موفقیت انجام شد"
               : "Payment completed"
-            : fa
-              ? "پرداخت هنوز تأیید نشده است"
-              : "Payment not confirmed yet"}
+            : refunded
+              ? manualRefundConfirmed
+                ? (fa ? "تأیید بازپرداخت دستیِ خارج از برنامه ثبت شد" : "Off-app manual refund confirmation recorded")
+                : (fa ? "وضعیت بازپرداخت نیازمند بررسی است" : "Refund status needs verification")
+              : fa
+                ? "پرداخت هنوز تأیید نشده است"
+                : "Payment not confirmed yet"}
         </p>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -125,18 +140,28 @@ export function ReceiptView({ initial }: { initial: ReceiptData }) {
             <dt className="text-caption text-foreground-secondary">{fa ? "وضعیت" : "Status"}</dt>
             <dd className="font-medium">
               {data.order.status === "paid"
-                ? fa
-                  ? "پرداخت‌شده"
-                  : "paid"
+                ? (fa ? "پرداخت‌شده" : "Paid")
                 : data.order.status === "pending_payment"
-                  ? fa
-                    ? "در انتظار پرداخت"
-                    : "awaiting payment"
-                  : data.order.status}
+                  ? (fa ? "در انتظار پرداخت" : "Awaiting payment")
+                  : refunded
+                    ? manualRefundConfirmed
+                      ? (fa ? "بازپرداخت دستیِ انجام‌شده خارج از برنامه ثبت شده؛ این سایت وجهی منتقل نکرده است." : "Manually completed off-app refund recorded; this site did not transfer funds.")
+                      : (fa ? "وضعیت بازپرداخت هنوز تأیید اپراتور ندارد." : "Refund status has no recorded operator confirmation.")
+                    : data.order.status}
             </dd>
+            {refunded && data.order.refundReference && (
+              <p className="mt-1 break-all text-caption text-foreground-secondary">
+                {fa ? "مرجع پیگیری انتقال:" : "Transfer reference:"} <span dir="ltr">{data.order.refundReference}</span>
+              </p>
+            )}
+            {refunded && data.order.refundedAt && (
+              <p className="mt-1 break-all text-caption text-foreground-secondary">
+                {fa ? "زمان ثبت تأیید:" : "Confirmation recorded at:"} <span dir="ltr">{data.order.refundedAt}</span>
+              </p>
+            )}
           </div>
           <div>
-            <dt className="text-caption text-foreground-secondary">{fa ? "درگاه" : "Gateway"}</dt>
+            <dt className="text-caption text-foreground-secondary">{fa ? "درگاه پرداخت اولیه" : "Original payment provider"}</dt>
             <dd className="font-medium">
               {data.order.provider ?? (data.order.charge.currency === "USD" ? "Stripe" : "Zarinpal")}
               {data.order.sandbox ? (fa ? " (آزمایشی)" : " (sandbox)") : ""}
@@ -144,7 +169,7 @@ export function ReceiptView({ initial }: { initial: ReceiptData }) {
           </div>
         </dl>
 
-        {!paid && (
+        {!paid && !refunded && (
           <div className="mt-5 flex flex-wrap gap-2">
             <Button type="button" variant="outline" onClick={refresh}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -173,9 +198,13 @@ export function ReceiptView({ initial }: { initial: ReceiptData }) {
                       {license.exclusive ? (fa ? " · انحصاری" : " · exclusive") : ""}
                     </p>
                     <p className="mt-1 text-caption text-foreground-secondary">
-                      {fa
-                        ? `دانلود: ${license.quota.used} از ${license.quota.unlimited ? "نامحدود" : license.quota.limit}`
-                        : `Downloads: ${license.quota.used} of ${license.quota.unlimited ? "unlimited" : license.quota.limit}`}
+                      {license.status === "revoked"
+                        ? (fa ? "این مجوز باطل شده است." : "This license has been revoked.")
+                        : license.status === "expired"
+                          ? (fa ? "این مجوز منقضی شده است." : "This license has expired.")
+                          : fa
+                            ? `دانلود: ${license.quota.used} از ${license.quota.unlimited ? "نامحدود" : license.quota.limit}`
+                            : `Downloads: ${license.quota.used} of ${license.quota.unlimited ? "unlimited" : license.quota.limit}`}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -189,7 +218,11 @@ export function ReceiptView({ initial }: { initial: ReceiptData }) {
                       </a>
                     ) : (
                       <span className="rounded-full border border-border px-4 py-2 text-sm text-foreground-secondary">
-                        {fa ? "سهمیه دانلود تکمیل شد" : "Download quota reached"}
+                        {license.status === "revoked"
+                          ? (fa ? "دانلود به‌دلیل ابطال مجوز در دسترس نیست" : "Unavailable: license revoked")
+                          : license.status === "expired"
+                            ? (fa ? "دانلود به‌دلیل انقضای مجوز در دسترس نیست" : "Unavailable: license expired")
+                            : (fa ? "سهمیه دانلود تکمیل شد" : "Download quota reached")}
                       </span>
                     )}
                     <a
@@ -206,12 +239,14 @@ export function ReceiptView({ initial }: { initial: ReceiptData }) {
               </li>
             ))}
           </ul>
-          <p className="mt-4 flex items-center gap-2 text-caption text-foreground-secondary">
-            <Check className="h-3.5 w-3.5 text-success" />
-            {fa
-              ? "نسخه‌ای از همین لینک‌ها به ایمیل شما ارسال شد. همه دانلودها در پنل کاربری قابل پیگیری است."
-              : "The same links were e-mailed to you. Every download is tracked in your account."}
-          </p>
+          {!refunded && (
+            <p className="mt-4 flex items-center gap-2 text-caption text-foreground-secondary">
+              <Check className="h-3.5 w-3.5 text-success" />
+              {fa
+                ? "نسخه‌ای از همین لینک‌ها به ایمیل شما ارسال شد. همه دانلودها در پنل کاربری قابل پیگیری است."
+                : "The same links were e-mailed to you. Every download is tracked in your account."}
+            </p>
+          )}
         </section>
       )}
 

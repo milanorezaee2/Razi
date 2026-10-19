@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { storeBackendName } from "@/lib/data/store";
+import { leadStoreBackendName } from "@/lib/data/leads";
 import { adminConfigured } from "@/lib/auth";
 import { storageBackend } from "@/lib/marketplace/storage";
 
@@ -44,6 +45,11 @@ export async function GET() {
       service: "rosie-atelier",
       time: new Date().toISOString(),
       storage: { backend, persistent, redis },
+      inbox: {
+        backend: leadStoreBackendName(),
+        persistent: leadStoreBackendName() === "redis",
+        note: leadStoreBackendName() === "redis" ? "shared_redis" : "local_disk_requires_persistent_volume",
+      },
       media: {
         backend: storageBackend(),
         sharedObjectStorageConfigured: storageBackend() === "s3",

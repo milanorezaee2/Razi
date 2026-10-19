@@ -40,8 +40,8 @@ const LEGAL_DOCS = ["privacy", "terms", "licenses"];
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
-/** Refresh hourly so admin-created slugs appear without a redeploy. */
-export const revalidate = 3600;
+/** Rebuild against the current publication state so review decisions take effect immediately. */
+export const revalidate = 0;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const content = await getContent();

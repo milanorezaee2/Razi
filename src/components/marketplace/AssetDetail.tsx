@@ -9,7 +9,7 @@ import { useMarketplaceCart } from "@/components/marketplace/MarketplaceCart";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { formatPrice, href, t } from "@/lib/utils";
-import { familyById } from "@/lib/data/families";
+import { familyById, type ProductFamily } from "@/lib/data/families";
 import type { Locale, Localized } from "@/lib/i18n/types";
 import type { LicenseTier, PricePair } from "@/lib/marketplace/types";
 
@@ -48,6 +48,7 @@ interface Props {
   locale: Locale;
   asset: AssetDetailData;
   artistName: { fa: string; en: string } | null;
+  productFamilies: ProductFamily[];
   couponHint?: string | null;
 }
 
@@ -66,9 +67,9 @@ function bytes(value: number, locale: Locale) {
   return locale === "fa" ? text.replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[Number(d)]) : text;
 }
 
-export function AssetDetail({ locale, asset, artistName, couponHint }: Props) {
+export function AssetDetail({ locale, asset, artistName, productFamilies, couponHint }: Props) {
   const fa = locale === "fa";
-  const family = familyById(asset.familyId);
+  const family = familyById(productFamilies, asset.familyId);
   const { add, has, remove, captureReferral } = useMarketplaceCart();
   const referral = useSearchParams().get("ref");
   useEffect(() => {
@@ -429,8 +430,8 @@ export function AssetDetail({ locale, asset, artistName, couponHint }: Props) {
             <p className="font-medium text-foreground">{fa ? "گارانتی کیفیت فایل" : "File quality guarantee"}</p>
             <p className="mt-1 leading-relaxed">
               {fa
-                ? "هر فایل قبل از انتشار اسکن ویروس می‌شود و پیش‌نمایش آن با واترمارک ساخته می‌شود. اگر فایل خراب باشد، لایسنس باطل و مبلغ بازگردانده می‌شود."
-                : "Every file is virus-scanned and previewed with a watermark before publication. If a file is defective, the license is revoked and refunded."}
+                ? "هر فایل پیش از انتشار اسکن ویروس می‌شود و پیش‌نمایش آن با واترمارک ساخته می‌شود. اگر ایراد فنی تأیید شود، پشتیبانی برای رفع مشکل یا بازپرداخت اقدام می‌کند. بازپرداخت تأییدشده دستی و خارج از این برنامه از طریق بانک/ارائه‌دهنده انجام می‌شود؛ این برنامه وجهی منتقل نمی‌کند."
+                : "Every file is virus-scanned and previewed with a watermark before publication. If a technical fault is confirmed, support will arrange a fix or refund. Any approved refund is handled manually outside this app through the bank/provider; this app does not transfer funds."}
             </p>
             <Link href={href(locale, "/legal/returns")} className="mt-2 inline-block text-accent underline">
               {fa ? "سیاست بازگشت" : "Refund policy"}

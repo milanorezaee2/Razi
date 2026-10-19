@@ -1,15 +1,8 @@
 import type { Locale, Localized } from "../i18n/types";
 
 /**
- * Product families — the eight real categories a pattern (پترن) can be made for.
- *
- * This is the taxonomy the whole surface business runs on:
- *   • the artist picks one when uploading a master (`MasterUploader`),
- *   • the marketplace asset stores it (`Asset.familyId`),
- *   • the shop groups its cards by it and shows the list under «پترن» in the sidebar,
- *   • the admin can re-classify any product with it.
- *
- * The order is meaningful — it is the order the shop and the upload form use.
+ * A product family is an admin-managed taxonomy record. The initial values live
+ * here only as seed data; runtime consumers must use SiteContent.productFamilies.
  */
 export interface ProductFamily {
   id: string;
@@ -18,7 +11,8 @@ export interface ProductFamily {
   order: number;
 }
 
-export const PRODUCT_FAMILIES: ProductFamily[] = [
+/** Initial taxonomy used to seed new/legacy SiteContent documents. */
+export const DEFAULT_PRODUCT_FAMILIES: ProductFamily[] = [
   { id: "fam-wallpaper", slug: "wallpaper", name: { fa: "کاغذ دیواری", en: "Wallpaper" }, order: 1 },
   { id: "fam-home-fabric", slug: "home-fabric", name: { fa: "پارچه دکوراسیون داخلی", en: "Home Fabric" }, order: 2 },
   { id: "fam-curtain", slug: "curtain", name: { fa: "پرده", en: "Curtain" }, order: 3 },
@@ -35,28 +29,42 @@ export const FAMILY_PARENT: Localized = { fa: "پترن", en: "Pattern" };
 /** Label for products that are not classified in any family yet. */
 export const FAMILY_OTHER: Localized = { fa: "سایر محصولات", en: "Other products" };
 
-export const FAMILY_IDS: string[] = PRODUCT_FAMILIES.map((family) => family.id);
+export function orderedProductFamilies(families: readonly ProductFamily[]): ProductFamily[] {
+  return [...families].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+}
 
-export function familyById(id: string | null | undefined): ProductFamily | null {
+export function familyById(
+  families: readonly ProductFamily[],
+  id: string | null | undefined,
+): ProductFamily | null {
   if (!id) return null;
-  return PRODUCT_FAMILIES.find((family) => family.id === id) ?? null;
+  return families.find((family) => family.id === id) ?? null;
 }
 
-export function familyBySlug(slug: string | null | undefined): ProductFamily | null {
+export function familyBySlug(
+  families: readonly ProductFamily[],
+  slug: string | null | undefined,
+): ProductFamily | null {
   if (!slug) return null;
-  return PRODUCT_FAMILIES.find((family) => family.slug === slug) ?? null;
+  return families.find((family) => family.slug === slug) ?? null;
 }
 
-export function familyName(id: string | null | undefined, locale: Locale): string {
-  const family = familyById(id);
+export function familyName(
+  families: readonly ProductFamily[],
+  id: string | null | undefined,
+  locale: Locale,
+): string {
+  const family = familyById(families, id);
   return family ? family.name[locale] ?? family.name.fa : "";
 }
 
-export function isFamilyId(value: unknown): boolean {
-  return typeof value === "string" && FAMILY_IDS.includes(value);
-}
-
 /** Families in canonical order, optionally only those with a non-zero count. */
-export function familiesWithCounts(counts: Record<string, number>, onlyNonEmpty = false): ProductFamily[] {
-  return PRODUCT_FAMILIES.filter((family) => !onlyNonEmpty || (counts[family.id] ?? 0) > 0).sort((a, b) => a.order - b.order);
+export function familiesWithCounts(
+  families: readonly ProductFamily[],
+  counts: Record<string, number>,
+  onlyNonEmpty = false,
+): ProductFamily[] {
+  return orderedProductFamilies(families).filter(
+    (family) => !onlyNonEmpty || (counts[family.id] ?? 0) > 0,
+  );
 }
