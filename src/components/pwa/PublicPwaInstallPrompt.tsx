@@ -61,7 +61,7 @@ export function PublicPwaInstallPrompt({ locale }: { locale: "fa" | "en" }) {
 
   return (
     <aside
-      className="fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[80] mx-auto max-w-md lg:inset-x-auto lg:right-6 lg:bottom-6"
+      className="mobile-install-prompt fixed inset-x-3 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[80] mx-auto max-w-md lg:inset-x-auto lg:right-6 lg:bottom-6"
       aria-label={isPersian ? "نصب آتلیه رزی" : "Install Rosie Atelier"}
     >
       <div className="flex items-start gap-3 rounded-2xl border border-accent/25 bg-white p-3 shadow-xl">

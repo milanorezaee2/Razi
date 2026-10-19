@@ -16,6 +16,7 @@ import { dictionaries } from "@/lib/i18n/dictionary";
 import { getCspNonce } from "@/lib/security/nonce";
 import { PublicPwaRegister } from "@/components/pwa/PublicPwaRegister";
 import { PublicPwaInstallPrompt } from "@/components/pwa/PublicPwaInstallPrompt";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
         >
           {children}
         </LocaleChrome>
+        <MobileBottomNav />
         <LiveChatWidget />
         <PublicPwaInstallPrompt locale={locale} />
       </AppProviders>

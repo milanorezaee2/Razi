@@ -41,7 +41,7 @@ export function PatternCard({ pattern, variant = "default", priority, className 
 
   return (
     <>
-      <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("group relative flex flex-col rounded-lg", className)}>
+      <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("pattern-card group relative flex min-w-0 flex-col rounded-lg", className)}>
         <Link href={url} className="relative block overflow-hidden rounded-lg bg-background-secondary" aria-label={t(pattern.title, locale)}>
           <div className={cn("relative w-full", ratio)}>
             <Image
@@ -65,19 +65,20 @@ export function PatternCard({ pattern, variant = "default", priority, className 
             <FavoriteButton id={pattern.id} size="sm" />
           </div>
           {/* hover CTA */}
-          <div className="pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-3 items-center justify-between gap-2 opacity-0 transition-[opacity,transform] duration-300 ease-[var(--ease-out)] group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+          <div className="pattern-card__actions pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-3 items-center justify-between gap-2 opacity-0 transition-[opacity,transform] duration-300 ease-[var(--ease-out)] group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 setQuick(true);
               }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full glass px-3 text-[13px] font-medium text-foreground hover:bg-surface"
+              className="pattern-card__quick inline-flex h-9 items-center gap-1.5 rounded-full glass px-3 text-[13px] font-medium text-foreground hover:bg-surface"
             >
               <Eye className="h-3.5 w-3.5" />
               {dict.common.quickView}
             </button>
             <AddToCartButton
+              className="pattern-card__add"
               variant="icon"
               line={{
                 kind: "pattern",
@@ -94,13 +95,13 @@ export function PatternCard({ pattern, variant = "default", priority, className 
           </div>
         </Link>
 
-        <div className={cn("flex flex-col gap-1.5 pt-3.5", variant === "large" && "pt-5")}>
+        <div className={cn("pattern-card__info flex min-w-0 flex-col gap-1.5 pt-3.5", variant === "large" && "pt-5")}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <Link href={url} className={cn("block truncate font-medium text-foreground hover:text-accent transition-colors", variant === "large" ? "text-h4" : "text-[15px]")}>
+              <Link href={url} className={cn("pattern-card__title block truncate font-medium text-foreground hover:text-accent transition-colors", variant === "large" ? "text-h4" : "text-[15px]")}>
                 {t(pattern.title, locale)}
               </Link>
-              <p className="mt-0.5 truncate text-caption text-foreground-secondary">
+              <p className="pattern-card__subtitle mt-0.5 truncate text-caption text-foreground-secondary">
                 {pattern.artist ? (
                   <Link href={href(locale, `/artists/${pattern.artist.slug}`)} className="hover:text-foreground">
                     {t(pattern.artist.name, locale)}
@@ -111,12 +112,12 @@ export function PatternCard({ pattern, variant = "default", priority, className 
                 {pattern.category && <span className="text-muted"> · {t(pattern.category.name, locale)}</span>}
               </p>
             </div>
-            <span className="shrink-0 text-sm font-semibold tabular text-foreground">{formatPrice(pattern.price, locale)}</span>
+            <span className="pattern-card__price shrink-0 text-sm font-semibold tabular text-foreground">{formatPrice(pattern.price, locale)}</span>
           </div>
 
           {/* Spoonflower-style colourway dots */}
           {colorways.length > 0 && (
-            <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="pattern-card__colorways flex items-center justify-between gap-2 pt-1">
               <ColorwayDots
                 colorways={colorways}
                 value={activeCw.id}
@@ -131,7 +132,7 @@ export function PatternCard({ pattern, variant = "default", priority, className 
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="pattern-card__metadata flex items-center justify-between gap-2 pt-0.5">
             <Sku value={pattern.sku} />
             {variant !== "compact" && (
               <span className="truncate text-caption text-muted" dir="auto">

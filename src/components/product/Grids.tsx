@@ -26,9 +26,9 @@ export function PatternGrid({ patterns, className }: { patterns: PatternCardData
 export function ProductGrid({ products, className }: { products: ProductCardData[]; className?: string }) {
   if (!products.length) return <EmptyState />;
   return (
-    <div className={cn("grid grid-cols-1 gap-x-4 gap-y-8 xs:grid-cols-2 md:grid-cols-3 md:gap-x-5 xl:grid-cols-4", className)}>
+    <div className={cn("product-grid grid grid-cols-2 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-8 md:grid-cols-3 xl:grid-cols-4", className)}>
       {products.map((p, i) => (
-        <Reveal key={p.id} delay={(i % 4) * 50}>
+        <Reveal key={p.id} delay={(i % 4) * 50} className="min-w-0">
           <ProductCard product={p} priority={i < 4} />
         </Reveal>
       ))}

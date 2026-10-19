@@ -109,60 +109,97 @@ export function DiscoverySection({ patterns, categories }: { patterns: PatternCa
  */
 export function CategoriesSection({ categories }: { categories: Category[] }) {
   const { locale, dict } = useLocale();
+  const fa = locale === "fa";
   const cats = categories.slice(0, 6);
   if (!cats.length) return null;
 
   return (
     <section className="bg-background-secondary">
       <div className="container-x section-y">
-        <Reveal>
+        {/* A compact, swipeable category discovery rail for phones. */}
+        <Reveal className="mobile-category-heading md:hidden">
+          <div className="min-w-0">
+            <p className="text-label text-accent">{dict.nav.categories}</p>
+            <h2 className="mt-2 font-display text-h3 text-balance text-foreground">
+              {fa ? "از کجا شروع کنیم؟" : "Find your next favorite"}
+            </h2>
+          </div>
+          <Link href={href(locale, "/styles")} className="mobile-category-heading__all">
+            {dict.nav.viewAll}
+            <ArrowUpRight className="h-3.5 w-3.5 rtl-flip" />
+          </Link>
+        </Reveal>
+
+        <Reveal className="mt-5 md:hidden">
+          <div className="mobile-category-list no-scrollbar">
+            {cats.map((category, index) => (
+              <Link
+                key={category.id}
+                href={href(locale, `/patterns?category=${category.slug}`)}
+                className="mobile-category-card group"
+                aria-label={t(category.name, locale)}
+              >
+                <span className="mobile-category-card__image">
+                  <Image
+                    src={category.image}
+                    alt=""
+                    fill
+                    sizes="112px"
+                    priority={index < 2}
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <span className="mobile-category-card__shade" />
+                  <span className="mobile-category-card__icon" aria-hidden="true">{getCategoryIcon(category.slug)}</span>
+                </span>
+                <span className="mobile-category-card__label">{t(category.name, locale)}</span>
+              </Link>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* Spacious editorial category grid on tablet and desktop. */}
+        <Reveal className="hidden md:block">
           <div className="text-center">
             <p className="text-label text-accent mb-3">
-              {locale === "fa" ? "دسته‌بندی‌ها" : "Categories"}
+              {fa ? "دسته‌بندی‌ها" : "Categories"}
             </p>
             <h2 className="font-display text-h1 text-balance">
-              {locale === "fa" ? "سبک خود را انتخاب کنید" : "Explore by Category"}
+              {fa ? "سبک خود را انتخاب کنید" : "Explore by Category"}
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-body-lg text-foreground-secondary">
-              {locale === "fa"
+              {fa
                 ? "از میان طیف گسترده‌ای از سبک‌ها و دسته‌بندی‌ها، طرح مورد نظر خود را بیابید"
                 : "Discover patterns across a wide range of styles and product categories"}
             </p>
           </div>
         </Reveal>
 
-        <Reveal className="mt-10">
-          {/* 2 cols on mobile → 3 on sm → 6 on lg: all 6 in one row on desktop */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {cats.map((c, i) => (
-              <Reveal key={c.id} delay={i * 55}>
+        <Reveal className="mt-10 hidden md:block">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {cats.map((category, index) => (
+              <Reveal key={category.id} delay={index * 55}>
                 <Link
-                  href={href(locale, `/patterns?category=${c.slug}`)}
+                  href={href(locale, `/patterns?category=${category.slug}`)}
                   className="group relative flex flex-col items-center overflow-hidden rounded-2xl border border-border bg-surface transition-shadow duration-300 hover:shadow-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  {/* image — square crop, compact */}
                   <div className="relative w-full overflow-hidden" style={{ paddingBottom: "100%" }}>
                     <Image
-                      src={c.image}
-                      alt={t(c.name, locale)}
+                      src={category.image}
+                      alt={t(category.name, locale)}
                       fill
                       sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 17vw"
                       className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.07]"
                     />
-                    {/* subtle gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
-                    {/* decorative icon badge — centred on image */}
                     <span className="absolute inset-0 flex items-center justify-center">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white opacity-70 transition-all duration-300 group-hover:opacity-100 group-hover:scale-110">
-                        {getCategoryIcon(c.slug)}
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white opacity-70 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:opacity-100">
+                        {getCategoryIcon(category.slug)}
                       </span>
                     </span>
                   </div>
-
-                  {/* label */}
                   <div className="w-full px-2 py-2.5 text-center">
-                    <p className="truncate font-semibold text-foreground text-xs leading-snug">
-                      {t(c.name, locale)}
+                    <p className="truncate text-xs font-semibold leading-snug text-foreground">
+                      {t(category.name, locale)}
                     </p>
                   </div>
                 </Link>
@@ -171,7 +208,7 @@ export function CategoriesSection({ categories }: { categories: Category[] }) {
           </div>
         </Reveal>
 
-        <Reveal className="mt-8 flex justify-center">
+        <Reveal className="mt-8 hidden justify-center md:flex">
           <Link
             href={href(locale, "/styles")}
             className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-2.5 text-sm font-medium text-foreground-secondary transition-colors hover:border-foreground hover:text-foreground"
@@ -184,7 +221,6 @@ export function CategoriesSection({ categories }: { categories: Category[] }) {
     </section>
   );
 }
-
 
 
 /* ------------------------------------------------------------------ */
