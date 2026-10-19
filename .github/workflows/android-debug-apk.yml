@@ -44,9 +44,32 @@ jobs:
         run: npm ci
 
       - name: Build installable debug APK
-        run: npm run android:apk:debug
+        shell: bash
+        run: |
+          set -o pipefail
+          set +e
+          npm run android:apk:debug 2>&1 | tee android-build.log
+          build_status=$?
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            details="$(tail -n 30 android-build.log | tr '\n' ' ' | cut -c1-3000)"
+            details="${details//'%'/'%25'}"
+            details="${details//$'\r'/'%0D'}"
+            details="${details//$'\n'/'%0A'}"
+            echo "::error title=Android APK build failed::$details"
+            exit "$build_status"
+          fi
         env:
           CAPACITOR_SERVER_URL: ${{ inputs.site_url || 'https://rosieatelier.com' }}
+
+      - name: Upload Android build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-debug-build-log
+          path: android-build.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Publish APK artifact
         uses: actions/upload-artifact@v7
