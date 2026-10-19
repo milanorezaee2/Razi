@@ -83,6 +83,7 @@ export function Hero({ hero, patterns, stats }: Props) {
   /* ── timer-driven mode (no bgImages, OR sliderMode forced) ── */
   useEffect(() => {
     const mobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    if (mobileViewport && !bgImages) return;
     const useTimer = !bgImages || forceSlider || mobileViewport;
     if (!useTimer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const slideCount = bgImages ? bgImages.length : patterns.length;
@@ -205,7 +206,7 @@ export function Hero({ hero, patterns, stats }: Props) {
                 </div>
               ))}
             </dl>
-            {count > 1 && (
+            {slideImages && count > 1 && (
               <div className="mobile-hero__indicators md:hidden" role="group" aria-label={locale === "fa" ? "اسلایدهای معرفی" : "Featured slides"}>
                 {Array.from({ length: count }, (_, index) => (
                   <button

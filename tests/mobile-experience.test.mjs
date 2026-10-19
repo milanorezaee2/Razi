@@ -17,6 +17,8 @@ test("public mobile experience has app navigation, adaptive hero, and touch-frie
   assert.match(nav, /openSearch/);
   assert.match(hero, /mobile-hero-scroll-wrapper/);
   assert.match(hero, /max-width: 767px/);
+  assert.match(hero, /mobileViewport && !bgImages/);
+  assert.match(hero, /slideImages && count > 1/);
   assert.match(categories, /mobile-category-list/);
   assert.match(grids, /grid-cols-2/);
   assert.match(styles, /safe-area-inset-bottom/);
