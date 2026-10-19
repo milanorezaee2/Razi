@@ -2,10 +2,16 @@ import type { NextConfig } from "next";
 
 // Browser-hosted previews cannot run the native Sharp image-optimisation service.
 // Keep this separate from production and normal Node development.
-const stackblitzPreview = process.env.ROSIE_STACKBLITZ === "1" && process.env.NODE_ENV !== "production";
+const stackblitzPreview =
+  process.env.ROSIE_STACKBLITZ === "1" && process.env.NODE_ENV !== "production";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["*.e2b.app", "*.webcontainer-api.io", "*.local-credentialless.webcontainer-api.io", "*.stackblitz.io"],
+  allowedDevOrigins: [
+    "*.e2b.app",
+    "*.webcontainer-api.io",
+    "*.local-credentialless.webcontainer-api.io",
+    "*.stackblitz.io",
+  ],
   // Keep server routes, API handlers, middleware, and authentication in the distributable bundle.
   output: "standalone",
   distDir: "dist/.next",
@@ -24,6 +30,8 @@ const nextConfig: NextConfig = {
     // Nothing on this site renders wider than 2×1920; capping the list trims ~40% off each <img>.
     deviceSizes: [640, 750, 1080, 1200, 1920, 2560, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // SiteImage requests quality 100; retain legacy values for cached URLs and callers.
+    qualities: [75, 85, 90, 95, 100],
   },
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import { BookOpen, Users, Award, GraduationCap } from "lucide-react";
 import { usePortfolioLang } from "@/components/portfolio/PortfolioLangProvider";
 import { T, COURSES } from "@/lib/portfolio-translations";
@@ -35,7 +35,7 @@ export function PfAcademic({ stats }: { stats: import("@/lib/razieh-profile").Pr
             alt={T("academicTitle", lang)}
             fill
             sizes="(min-width: 1024px) 80vw, 95vw"
-            quality={85}
+            quality={100}
             className="object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-pf-ink/60 via-transparent to-transparent" />

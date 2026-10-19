@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import { Plus, X } from "lucide-react";
 import { usePortfolioLang } from "@/components/portfolio/PortfolioLangProvider";
 import { T, WORKS, type Work } from "@/lib/portfolio-translations";

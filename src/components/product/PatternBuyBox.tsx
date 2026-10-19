@@ -7,7 +7,7 @@ import { cn, formatPrice, href, t } from "@/lib/utils";
 import type { PatternCardData } from "@/components/cards/PatternCard";
 import { AddToCartButton } from "./Actions";
 import { ColorwayDots, resolveColorways } from "./ColorwayDots";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 
 const LICENSES = [
   { id: "personal", fa: "شخصی", en: "Personal", mult: 1 },

@@ -1,7 +1,7 @@
 "use client";
 
 import { artistPortfolioPath } from "@/lib/artist/portfolio";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowUpRight, Globe, MapPin, Camera, UserRound } from "lucide-react";
 import { useLocale } from "@/components/providers/AppProviders";

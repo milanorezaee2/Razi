@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowUpRight, Layers, Sparkles, Truck } from "lucide-react";
 import { Badge, Sku } from "@/components/ui/Badge";
@@ -133,7 +133,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
               alt={t(lead.title, locale)}
               fill
               priority
-              quality={90}
+              quality={100}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
               className="img-zoom object-cover"
             />

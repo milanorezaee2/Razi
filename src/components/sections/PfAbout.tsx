@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import { usePortfolioLang } from "@/components/portfolio/PortfolioLangProvider";
 import { T } from "@/lib/portfolio-translations";
 
@@ -22,7 +22,7 @@ export function PfAbout({ stats }: { stats: import("@/lib/razieh-profile").Profi
                   alt={lang === "fa" ? "پرتره راضیه خیری‌پور" : "Razieh Kheiripour portrait"}
                   fill
                   sizes="(min-width: 1024px) 40vw, 90vw"
-                  quality={90}
+                  quality={100}
                   className="object-cover object-top grayscale transition-all duration-700 hover:grayscale-0"
                 />
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { Radio, CalendarClock, Clock, Users, ArrowUpRight } from "lucide-react";
 import { useState, useEffect } from "react";

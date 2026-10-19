@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { RAZIEH_PROFILE } from "@/lib/razieh-profile";
@@ -32,7 +32,7 @@ export function PortfolioIntro({ locale }: { locale: Locale }) {
                   alt={t(p.portraitAlt, locale)}
                   fill
                   priority
-                  quality={90}
+                  quality={100}
                   sizes="(min-width: 1024px) 40vw, 92vw"
                   className="object-cover"
                 />
