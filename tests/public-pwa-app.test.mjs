@@ -47,5 +47,5 @@ test("Android companion is configured as a branded, HTTPS-first Capacitor app", 
   assert.equal(pkg.dependencies["@capacitor/core"], pkg.dependencies["@capacitor/android"]);
   assert.ok(pkg.scripts["android:apk:debug"]);
   assert.match(docs, /android\/app\/build\/outputs\/apk\/debug\/app-debug\.apk/);
-  assert.match(docs, /JDK 17 or newer and Android SDK\/Build Tools 35/);
+  assert.match(docs, /JDK 21 or newer and Android SDK\/Build Tools 35/);
 });

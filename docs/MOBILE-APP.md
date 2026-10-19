@@ -24,6 +24,6 @@ npm run android:apk:debug
 
 The debug APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. The branch-specific GitHub Actions workflow also builds it after a push and publishes a 14-day downloadable artifact named `rosie-atelier-android-debug`; its manual trigger accepts a `site_url` input. For a release, configure a private Android signing key outside the repository and sign the bundle/APK; never commit keystores or passwords. A release also needs the production domain, HTTPS, and working OAuth/payment redirects.
 
-Capacitor loads the remote site because this Next.js app uses server-side APIs and is not a static export. Therefore the Android app requires an internet connection and the site must be deployed. Local APK compilation requires JDK 17 or newer and Android SDK/Build Tools 35; machines without those tools can still build/test the PWA and prepare the Android project, but cannot produce the APK locally.
+Capacitor loads the remote site because this Next.js app uses server-side APIs and is not a static export. Therefore the Android app requires an internet connection and the site must be deployed. Local APK compilation requires JDK 21 or newer and Android SDK/Build Tools 35; machines without those tools can still build/test the PWA and prepare the Android project, but cannot produce the APK locally.
 
 For local device testing only, an HTTP development server can be selected with `CAPACITOR_SERVER_URL=http://<LAN-IP>:3000` and `CAPACITOR_ALLOW_CLEARTEXT=1`. Never enable cleartext traffic for a release build.
