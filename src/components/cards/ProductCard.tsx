@@ -79,7 +79,7 @@ export function ProductCard({ product, variant = "default", className, priority 
               alt={`${t(product.title, locale)} — ${t(color.name, locale)}`}
               fill
               priority={priority}
-              sizes={variant === "large" ? "(max-width:768px) 150vw, 50vw" : "(max-width:640px) 90vw, (max-width:1024px) 33vw, 25vw"}
+              sizes={variant === "large" ? "(max-width:767px) 230vw, (max-width:1440px) 115vw, 90vw" : "(max-width:640px) 90vw, (max-width:1024px) 33vw, 25vw"}
               className="img-zoom object-cover anim-scale-fade"
             />
           </div>

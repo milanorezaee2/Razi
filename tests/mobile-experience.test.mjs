@@ -11,6 +11,8 @@ test("public mobile experience has app navigation, adaptive hero, and touch-frie
   const categories = read("src/components/home/sections.tsx");
   const grids = read("src/components/product/Grids.tsx");
   const gallery = read("src/components/product/Gallery.tsx");
+  const productCard = read("src/components/cards/ProductCard.tsx");
+  const patternCard = read("src/components/cards/PatternCard.tsx");
   const shopHero = read("src/components/shop/ShopHero.tsx");
   const styles = read("src/app/globals.css");
 
@@ -30,7 +32,10 @@ test("public mobile experience has app navigation, adaptive hero, and touch-frie
   assert.match(gallery, /sizes="160px"/);
   assert.match(gallery, /\(max-width:767px\) 640px/);
   assert.match(shopHero, /min-h-\[260px\]/);
+  assert.match(shopHero, /150vw/);
   assert.match(shopHero, /shop-hero__stats/);
+  assert.match(patternCard, /115vw/);
+  assert.match(productCard, /230vw/);
   assert.match(styles, /clamp\(31rem, 68svh, 38rem\)/);
   assert.match(styles, /pattern-card__media--large/);
   assert.match(styles, /safe-area-inset-bottom/);

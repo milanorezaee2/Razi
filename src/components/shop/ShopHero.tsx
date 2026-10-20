@@ -134,7 +134,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
               fill
               priority
               quality={100}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+              sizes="(max-width:640px) 150vw, (max-width:1023px) 125vw, (max-width:1440px) 80vw, 50vw"
               className="img-zoom object-cover"
             />
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
