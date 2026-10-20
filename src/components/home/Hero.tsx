@@ -165,9 +165,9 @@ export function Hero({ hero, patterns, stats }: Props) {
       </div>
 
       {/* cinematic vignette + gradients */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/70 via-[#0a0d13]/15 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0a0d13]/40 via-transparent to-transparent rtl:bg-gradient-to-l" />
-      <div className="pointer-events-none absolute inset-0 [box-shadow:inset_0_0_120px_30px_rgba(5,7,12,.25)]" />
+      <div className="mobile-hero__overlay mobile-hero__overlay--top absolute inset-0 bg-gradient-to-t from-[#0a0d13]/70 via-[#0a0d13]/15 to-transparent" />
+      <div className="mobile-hero__overlay mobile-hero__overlay--side absolute inset-0 bg-gradient-to-r from-[#0a0d13]/40 via-transparent to-transparent rtl:bg-gradient-to-l" />
+      <div className="mobile-hero__vignette pointer-events-none absolute inset-0 [box-shadow:inset_0_0_120px_30px_rgba(5,7,12,.25)]" />
 
       <div className="mobile-hero__content container-x relative flex h-full flex-col justify-end pb-10 pt-[calc(var(--announce-h,0px)+var(--header-h))] md:pb-14">
         <div className="grid items-end gap-6 lg:grid-cols-12 lg:gap-10">
