@@ -1,4 +1,4 @@
-package com.rosieatelier.app;
+package com.rosieatelier.admin;
 
 import com.getcapacitor.BridgeActivity;
 

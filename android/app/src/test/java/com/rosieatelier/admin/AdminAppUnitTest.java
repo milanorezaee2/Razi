@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package com.rosieatelier.admin;
 
 import static org.junit.Assert.*;
 
@@ -9,7 +9,7 @@ import org.junit.Test;
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-public class ExampleUnitTest {
+public class AdminAppUnitTest {
 
     @Test
     public void addition_isCorrect() throws Exception {

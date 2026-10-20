@@ -17,35 +17,46 @@ test("public locale routes expose localized install manifests and install prompt
     assert.equal(manifest.display, "standalone");
     assert.ok(manifest.icons.some((icon) => icon.purpose === "maskable"));
   }
-  assert.match(layout, /manifest: locale === "en" \? "\/site-manifest-en\.webmanifest"/);
-  assert.match(layout, /<PublicPwaRegister\s*\/>/);
-  assert.match(layout, /<PublicPwaInstallPrompt locale=\{locale\}/);
-  assert.match(installPrompt, /Add to Home Screen/);
-  assert.match(installPrompt, /__raPublicInstallPrompt/);
+  assert.ok(layout.includes('manifest: locale === "en" ? "/site-manifest-en.webmanifest"'));
+  assert.ok(layout.includes("<PublicPwaRegister />"));
+  assert.ok(layout.includes("<PublicPwaInstallPrompt locale={locale}"));
+  assert.ok(installPrompt.includes("Add to Home Screen"));
+  assert.ok(installPrompt.includes("__raPublicInstallPrompt"));
 });
 
 test("public service worker uses a network-first navigation fallback without caching user data", () => {
   const worker = read("public/sw.js");
 
-  assert.match(worker, /request\.mode !== "navigate"/);
-  assert.match(worker, /\/\(fa\|en\)/);
-  assert.match(worker, /fetch\(request\)\.catch/);
-  assert.match(worker, /pwa-offline-fa\.html/);
-  assert.match(worker, /pwa-offline-en\.html/);
-  assert.doesNotMatch(worker, /cache\.put\(request/);
+  assert.ok(worker.includes('request.mode !== "navigate"'));
+  assert.ok(worker.includes("/(fa|en)"));
+  assert.ok(worker.includes("fetch(request).catch"));
+  assert.ok(worker.includes("pwa-offline-fa.html"));
+  assert.ok(worker.includes("pwa-offline-en.html"));
+  assert.ok(!worker.includes("cache.put(request"));
 });
 
-test("Android companion is configured as a branded, HTTPS-first Capacitor app", () => {
+test("Android APK opens the secured admin console with dedicated branding", () => {
   const config = read("capacitor.config.ts");
   const pkg = JSON.parse(read("package.json"));
   const docs = read("docs/MOBILE-APP.md");
+  const gradle = read("android/app/build.gradle");
+  const manifest = read("android/app/src/main/AndroidManifest.xml");
+  const strings = read("android/app/src/main/res/values/strings.xml");
+  const workflow = read(".github/workflows/android-debug-apk.yml");
 
-  assert.match(config, /appId: "com\.rosieatelier\.app"/);
-  assert.match(config, /CAPACITOR_SERVER_URL/);
-  assert.match(config, /parsedSiteUrl\.protocol !== "https:"/);
-  assert.match(config, /\/fa\?source=android/);
+  assert.ok(config.includes('appId: "com.rosieatelier.admin"'));
+  assert.ok(config.includes('appName: "Rosie Atelier Admin"'));
+  assert.ok(config.includes("CAPACITOR_SERVER_URL"));
+  assert.ok(config.includes('parsedSiteUrl.protocol !== "https:"'));
+  assert.ok(config.includes("/admin/fa/login?source=android"));
+  assert.ok(gradle.includes('applicationId "com.rosieatelier.admin"'));
+  assert.ok(manifest.includes('android:allowBackup="false"'));
+  assert.ok(strings.includes("پنل مدیریت رزی"));
   assert.equal(pkg.dependencies["@capacitor/core"], pkg.dependencies["@capacitor/android"]);
   assert.ok(pkg.scripts["android:apk:debug"]);
-  assert.match(docs, /android\/app\/build\/outputs\/apk\/debug\/app-debug\.apk/);
-  assert.match(docs, /JDK 21 or newer and Android SDK\/Build Tools 35/);
+  assert.ok(docs.includes("android/app/build/outputs/apk/debug/app-debug.apk"));
+  assert.ok(docs.includes("JDK 21+"));
+  assert.ok(docs.includes("Android Build Tools 35.0.0"));
+  assert.match(docs, /admin sign-in page/i);
+  assert.ok(workflow.includes("name: rosie-admin-android-debug"));
 });

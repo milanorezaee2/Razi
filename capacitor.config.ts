@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-// The Next.js app uses server routes and authenticated APIs, so an Android
-// companion must load the deployed HTTPS site rather than a static export.
+// The admin console uses authenticated server routes and APIs, so the Android
+// app opens the deployed HTTPS admin login instead of bundling a static export.
 // Override this with CAPACITOR_SERVER_URL when building for another domain.
 const siteUrl = (
   process.env.CAPACITOR_SERVER_URL
@@ -23,13 +23,13 @@ if (parsedSiteUrl.protocol !== "https:" && !allowCleartext) {
 }
 
 const config: CapacitorConfig = {
-  appId: "com.rosieatelier.app",
-  appName: "Rosie Atelier",
+  appId: "com.rosieatelier.admin",
+  appName: "Rosie Atelier Admin",
   webDir: "capacitor-web",
   server: {
-    // This is a remote-webview companion for the online Next.js service.
+    // Start directly at admin sign-in; an existing admin session lands in the console.
     // Keep CAPACITOR_SERVER_URL pointed at the actual production deployment.
-    url: new URL("/fa?source=android", parsedSiteUrl).toString(),
+    url: new URL("/admin/fa/login?source=android", parsedSiteUrl).toString(),
     cleartext: allowCleartext,
     allowNavigation: [siteHost, `*.${siteHost}`],
     errorPath: "offline.html",
