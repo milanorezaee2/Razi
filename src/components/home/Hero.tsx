@@ -148,8 +148,8 @@ export function Hero({ hero, patterns, stats }: Props) {
           <video src={hero.video} poster={hero.image || undefined} autoPlay muted loop playsInline preload="metadata" onError={() => setFailedVideoUrl(hero.video ?? null)} className="h-full w-full object-cover" />
         ) : slideImages ? (
           slideImages.map((src, i) => (
-            <Image key={src} src={src} alt="" fill priority={i <= 1}
-              sizes="(min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
+            <Image key={src} src={src} alt="" fill priority={i === 0}
+              sizes="(max-width: 460px) 280vw, (max-width: 560px) 220vw, (max-width: 767px) 185vw, (min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
               className={cn(
                 "object-cover transition-opacity duration-[1000ms] ease-[var(--ease-out)]",
                 i === activeSlideIndex ? "opacity-100" : "opacity-0"
@@ -158,7 +158,7 @@ export function Hero({ hero, patterns, stats }: Props) {
           ))
         ) : (
           <Image src={hero.image} alt="" fill priority
-            sizes="(min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
+            sizes="(max-width: 460px) 280vw, (max-width: 560px) 220vw, (max-width: 767px) 185vw, (min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
             className="object-cover"
           />
         )}

@@ -2632,13 +2632,13 @@ html[lang="fa"] .pf-hero-title span {
   }
 
   .mobile-hero-scroll-wrapper {
-    height: clamp(35rem, 88svh, 49rem) !important;
+    height: clamp(31rem, 68svh, 38rem) !important;
   }
 
   .mobile-hero {
     position: relative !important;
     top: auto !important;
-    height: clamp(35rem, 88svh, 49rem) !important;
+    height: clamp(31rem, 68svh, 38rem) !important;
     min-height: 0 !important;
     max-height: none !important;
   }
@@ -2874,6 +2874,15 @@ html[lang="fa"] .pf-hero-title span {
     white-space: nowrap;
   }
 
+  .pattern-card__media--large {
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .mobile-gallery-stage {
+    width: min(100%, 20rem);
+    margin-inline: auto;
+  }
+
   .product-grid {
     align-items: start;
   }
@@ -2968,6 +2977,10 @@ html[lang="fa"] .pf-hero-title span {
 }
 
 @media (max-width: 370px) {
+  .shop-hero__stats {
+    display: none !important;
+  }
+
   .mobile-hero__actions {
     grid-template-columns: 1fr;
   }

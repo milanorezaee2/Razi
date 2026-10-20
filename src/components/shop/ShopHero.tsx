@@ -80,7 +80,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
   return (
     <div className="grid gap-3 lg:grid-cols-12 lg:gap-4">
       {/* ── 1 · the boutique panel ─────────────────────────────────────────── */}
-      <article className="relative isolate flex flex-col overflow-hidden rounded-xl bg-[#0d1117] p-8 text-white md:p-10 lg:col-span-5">
+      <article className="relative isolate flex flex-col overflow-hidden rounded-xl bg-[#0d1117] p-5 text-white sm:p-8 md:p-10 lg:col-span-5">
         <span aria-hidden className="pointer-events-none absolute -end-20 -top-24 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
         <span aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
 
@@ -91,7 +91,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         <h1 className="anim-blur-in mt-4 font-display text-h1 text-balance" style={{ animationDelay: "80ms" }}>{title}</h1>
         <p className="anim-blur-in mt-4 max-w-md text-body-lg text-white/70" style={{ animationDelay: "160ms" }}>{description}</p>
 
-        <div className="anim-fade-up mt-8 flex flex-wrap gap-3" style={{ animationDelay: "220ms" }}>
+        <div className="anim-fade-up mt-6 flex flex-wrap gap-3 sm:mt-8" style={{ animationDelay: "220ms" }}>
           <Button href={href(locale, "/shop?owner=site")} variant="accent" size="md">
             {labels.siteExclusive}
           </Button>
@@ -106,9 +106,9 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         </div>
 
         {/* live numbers from the catalogue — anchored to the panel's foot */}
-        <div className="mt-10 flex flex-1 flex-col justify-end">
+        <div className="mt-7 flex flex-1 flex-col justify-end sm:mt-10">
           <div
-            className="anim-fade-up grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+            className="shop-hero__stats anim-fade-up grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
             style={{ animationDelay: "280ms" }}
           >
             {stats.map((stat) => (
@@ -126,7 +126,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {lead && (
           <Link
             href={href(locale, `/shop/${lead.slug}`)}
-            className="group relative row-span-2 min-h-[320px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[440px]"
+            className="group relative row-span-2 min-h-[260px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[440px]"
           >
             <Image
               src={getProductColor(lead).image}
@@ -163,7 +163,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {second && (
           <Link
             href={href(locale, `/shop/${second.slug}`)}
-            className="group relative min-h-[200px] overflow-hidden rounded-xl bg-background-secondary"
+            className="group relative min-h-[160px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[200px]"
           >
             <Image
               src={getProductColor(second).image}

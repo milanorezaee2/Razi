@@ -38,7 +38,7 @@ export function Gallery({
 
   return (
     <div className={cn("grid gap-3", className)}>
-      <div className={cn("relative overflow-hidden rounded-lg bg-background-secondary", ratio)}>
+      <div className={cn("mobile-gallery-stage relative overflow-hidden rounded-lg bg-background-secondary", ratio)}>
         {display.map((src, idx) => (
           <Image
             key={src + idx}
@@ -46,7 +46,7 @@ export function Gallery({
             alt={alt}
             fill
             priority={idx === 0}
-            sizes="(max-width:1024px) 100vw, 55vw"
+            sizes="(max-width:767px) 640px, (max-width:1024px) 100vw, 55vw"
             className={cn(
               "object-cover transition-[opacity,transform] duration-700 ease-[var(--ease-out)]",
               idx === current ? "opacity-100 scale-100" : "opacity-0 scale-[1.03]",
@@ -68,7 +68,7 @@ export function Gallery({
                 idx === current ? "ring-2 ring-foreground" : "opacity-70 hover:opacity-100",
               )}
             >
-              <Image src={src} alt="" fill sizes="64px" className="object-cover" />
+              <Image src={src} alt="" fill sizes="160px" className="object-cover" />
             </button>
           ))}
         </div>

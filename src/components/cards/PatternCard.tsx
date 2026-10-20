@@ -43,14 +43,14 @@ export function PatternCard({ pattern, variant = "default", priority, className 
     <>
       <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("pattern-card group relative flex min-w-0 flex-col rounded-lg", className)}>
         <Link href={url} className="relative block overflow-hidden rounded-lg bg-background-secondary" aria-label={t(pattern.title, locale)}>
-          <div className={cn("relative w-full", ratio)}>
+          <div className={cn("pattern-card__media relative w-full", variant === "large" && "pattern-card__media--large", ratio)}>
             <Image
               key={displayImage}
               src={displayImage}
               alt={`${t(pattern.title, locale)} — ${t(activeCw.name, locale)}`}
               fill
               priority={priority}
-              sizes={variant === "large" ? "(max-width:768px) 100vw, 50vw" : "(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"}
+              sizes={variant === "large" ? "(max-width:768px) 180vw, 50vw" : "(max-width:640px) 90vw, (max-width:1024px) 33vw, 25vw"}
               className="img-zoom object-cover anim-scale-fade"
             />
           </div>
