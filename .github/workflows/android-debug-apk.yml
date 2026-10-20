@@ -9,7 +9,7 @@ on:
       site_url:
         description: "Production HTTPS origin used by the Rosie Admin APK"
         required: false
-        default: "https://rosieatelier.com"
+        default: "https://shiny-melomakarona-ee3003.netlify.app"
         type: string
 
 permissions:
@@ -60,7 +60,7 @@ jobs:
             exit "$build_status"
           fi
         env:
-          CAPACITOR_SERVER_URL: ${{ inputs.site_url || 'https://rosieatelier.com' }}
+          CAPACITOR_SERVER_URL: ${{ inputs.site_url || 'https://shiny-melomakarona-ee3003.netlify.app' }}
 
       - name: Upload Android build diagnostics
         if: failure()
