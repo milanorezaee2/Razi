@@ -22,28 +22,8 @@ import {
 import { artistStats, enrichEducation, enrichPattern, enrichPortfolio, enrichProduct, getSite } from "@/lib/data/queries";
 import { dictionaries } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/types";
-import type { HomeSectionKey } from "@/lib/types";
+import { Fragment } from "react";
 import { getEditableRouteMetadata } from "@/lib/site-seo";
-
-// A curated phone-first journey; desktop keeps the admin-configured section order.
-const MOBILE_HOME_SECTION_ORDER: Record<HomeSectionKey, number> = {
-  hero: 0,
-  discovery: 1,
-  styles: 2,
-  spaces: 3,
-  trending: 4,
-  newPatterns: 5,
-  bestSellers: 6,
-  exclusive: 7,
-  artists: 8,
-  portfolios: 9,
-  projects: 10,
-  education: 11,
-  stories: 12,
-  b2b: 13,
-  custom: 14,
-  newsletter: 15,
-};
 
 export const dynamic = "force-dynamic";
 
@@ -119,16 +99,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   };
 
   return (
-    <div className="home-page" lang={locale} dir={locale === "fa" ? "rtl" : "ltr"}>
+    <>
       {sections.map((section) => (
-        <div
-          key={section.key}
-          className={`home-page__section home-page__section--${section.key}`}
-          style={{ order: MOBILE_HOME_SECTION_ORDER[section.key] }}
-        >
-          {renderSection(section.key)}
-        </div>
+        <Fragment key={section.key}>{renderSection(section.key)}</Fragment>
       ))}
-    </div>
+    </>
   );
 }

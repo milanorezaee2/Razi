@@ -13,7 +13,6 @@
     "start": "node dist/.next/standalone/server.js",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "images:4k": "node scripts/upscale-site-photos-4k.mjs",
     "push:keys": "web-push generate-vapid-keys --json",
     "mail:status": "node scripts/mail-test.mjs --status",
     "mail:test": "node scripts/mail-test.mjs",
