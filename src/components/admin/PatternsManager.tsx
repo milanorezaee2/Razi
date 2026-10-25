@@ -23,8 +23,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
 import { cn, href, t } from "@/lib/utils";
-import type { Pattern, Category, Artist, SiteContent } from "@/lib/types";
+import { PATTERN_STATUS_META, patternStatusMeta } from "@/lib/pattern-status";
+import type { Pattern, PatternStatus, Category, Artist, SiteContent } from "@/lib/types";
 import { PatternEditor } from "@/components/admin/PatternEditor";
 import { getPatternReferenceCounts, hasCatalogReferences } from "@/lib/catalog-references";
 
@@ -109,6 +111,11 @@ function PatternRow({
           <code className="rounded bg-background-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted shrink-0">
             {pattern.sku}
           </code>
+          {(() => {
+            const meta = patternStatusMeta(pattern.status);
+            if (meta.tone === "success") return null;
+            return <Badge tone={meta.tone} className="px-2 py-0.5 text-[10px]">{meta.label.fa}</Badge>;
+          })()}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
           {artist ? (
@@ -216,6 +223,12 @@ function PatternGridCard({
               <div key={i} className="flex-1" style={{ background: hex }} />
             ))}
           </div>
+        )}
+        {/* وضعیت بررسی: همهٔ الگوهای غیرمنتشرشده در گرید هم مشخص‌اند. */}
+        {patternStatusMeta(pattern.status).tone !== "success" && (
+          <Badge tone={patternStatusMeta(pattern.status).tone} className="absolute right-2 top-2 border border-white/80 shadow-sm">
+            {patternStatusMeta(pattern.status).label.fa}
+          </Badge>
         )}
         {/* badge ها */}
         <div className="absolute inset-x-2 top-11 flex flex-wrap gap-1">
@@ -379,6 +392,7 @@ function createBlankPattern(categoryId: string): Pattern {
     id, sku: "", slug: "",
     title: { fa: "", en: "" }, description: { fa: "", en: "" },
     image: "", gallery: [], categoryId, spaceIds: [], artistId: null,
+    status: "published",
     price: { fa: 0, en: 0 },
     specs: { repeat: { fa: "", en: "" }, dpi: "", formats: "", colors: 0, scale: { fa: "", en: "" } },
     palette: [], colorways: undefined, tags: [],
@@ -400,6 +414,7 @@ export function PatternsManager({
   const locale = "fa";
   const [search, setSearch] = useState("");
   const [filterFlag, setFilterFlag] = useState<FlagKey | "all" | "site" | "artist">("all");
+  const [filterStatus, setFilterStatus] = useState<PatternStatus | "all">("all");
   const [filterCat, setFilterCat] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortKey, setSortKey] = useState<"date" | "name" | "likes">("date");
@@ -441,6 +456,11 @@ export function PatternsManager({
     // category filter
     if (filterCat !== "all") list = list.filter((p) => p.categoryId === filterCat);
 
+    // publication status filter — the review queue
+    if (filterStatus !== "all") {
+      list = list.filter((p) => (p.status ?? "published") === filterStatus);
+    }
+
     // sort
     list.sort((a, b) => {
       let cmp = 0;
@@ -451,7 +471,7 @@ export function PatternsManager({
     });
 
     return list;
-  }, [data.patterns, search, filterFlag, filterCat, sortKey, sortAsc, artistMap]);
+  }, [data.patterns, search, filterFlag, filterCat, filterStatus, sortKey, sortAsc, artistMap]);
 
   /* update a single pattern */
   const onPatternChange = (updated: Pattern) => {
@@ -627,6 +647,45 @@ export function PatternsManager({
                   {f.label}
                 </button>
               ))}
+            </div>
+
+            {/* فیلتر وضعیت انتشار — صف بررسی */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="flex items-center gap-1 text-xs text-muted">
+                <Eye className="h-3 w-3" />
+                وضعیت:
+              </span>
+              <button
+                type="button"
+                onClick={() => setFilterStatus("all")}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all",
+                  filterStatus === "all"
+                    ? "border-foreground bg-foreground text-white"
+                    : "border-border text-foreground-secondary hover:border-foreground-secondary",
+                )}
+              >
+                همه <span className="opacity-60">({farsiNum(data.patterns.length)})</span>
+              </button>
+              {(Object.keys(PATTERN_STATUS_META) as PatternStatus[]).map((status) => {
+                const count = data.patterns.filter((p) => (p.status ?? "published") === status).length;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setFilterStatus(status)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all",
+                      filterStatus === status
+                        ? "border-foreground bg-foreground text-white"
+                        : "border-border text-foreground-secondary hover:border-foreground-secondary",
+                    )}
+                  >
+                    {PATTERN_STATUS_META[status].label.fa} <span className="opacity-60">({farsiNum(count)})</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* فیلتر دسته‌بندی */}

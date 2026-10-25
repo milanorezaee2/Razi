@@ -382,12 +382,28 @@ export async function sendSubscriptionReceipt(input: {
 
 export async function sendPayoutNotice(input: { payout: Payout; to: string; artistName: string; locale?: "fa" | "en" }): Promise<string> {
   const locale = input.locale ?? "fa";
-  const statusLabel = {
-    requested: locale === "fa" ? "ثبت شد" : "requested",
-    approved: locale === "fa" ? "تأیید شد" : "approved",
-    paid: locale === "fa" ? "پرداخت شد" : "paid",
-    rejected: locale === "fa" ? "رد شد" : "rejected",
-  }[input.payout.status];
+  const manualTransferConfirmed = input.payout.status === "paid"
+    && input.payout.settlementMode === "manual"
+    && input.payout.manualTransferConfirmed === true
+    && Boolean(input.payout.manualTransferConfirmedAt)
+    && Boolean(input.payout.manualTransferConfirmedBy?.trim())
+    && Boolean(input.payout.reference?.trim())
+    && Boolean(input.payout.paymentEvidence?.trim());
+  const statusLabel = input.payout.status === "paid"
+    ? manualTransferConfirmed
+      ? (locale === "fa" ? "تأیید اپراتور برای انتقال دستی خارج از برنامه ثبت شد" : "operator confirmation recorded for a manual off-app transfer")
+      : (locale === "fa" ? "وضعیت نیازمند تطبیق تأیید دستی است" : "manual transfer confirmation requires reconciliation")
+    : {
+        requested: locale === "fa" ? "ثبت شد" : "requested",
+        approved: locale === "fa" ? "تأیید شد" : "approved",
+        paid: locale === "fa" ? "تأیید اپراتور برای انتقال دستی خارج از برنامه ثبت شد" : "operator confirmation recorded for a manual off-app transfer",
+        rejected: locale === "fa" ? "رد شد" : "rejected",
+      }[input.payout.status];
+  const manualTransferDisclosure = manualTransferConfirmed
+    ? locale === "fa"
+      ? "این سامانه وجهی منتقل نمی‌کند؛ این پیام فقط تأیید ثبت‌شدهٔ اپراتور برای انتقالی است که خارج از برنامه انجام شده است."
+      : "This app does not transfer funds. This message reports only the operator's recorded confirmation of a transfer completed outside the app."
+    : "";
 
   const html = shell(
     locale === "fa" ? "وضعیت تسویه" : "Payout status",
@@ -396,11 +412,13 @@ export async function sendPayoutNotice(input: { payout: Payout; to: string; arti
          <p style="font-size:13px">مبلغ: <b>${money(input.payout.amount, locale)}</b><br>
          روش: ${input.payout.method}<br>مقصد: <span dir="ltr">${input.payout.destination}</span>
          ${input.payout.reference ? `<br>کد پیگیری: <span dir="ltr">${input.payout.reference}</span>` : ""}</p>
+         ${manualTransferDisclosure ? `<p style="color:#667085;font-size:12px">${manualTransferDisclosure}</p>` : ""}
          ${input.payout.note ? `<p style="color:#667085;font-size:12px">${input.payout.note}</p>` : ""}`
       : `<p>Your payout request is ${statusLabel}.</p>
          <p style="font-size:13px">Amount: <b>${money(input.payout.amount, locale)}</b><br>
          Method: ${input.payout.method}<br>Destination: <span dir="ltr">${input.payout.destination}</span>
-         ${input.payout.reference ? `<br>Reference: <span dir="ltr">${input.payout.reference}</span>` : ""}</p>`,
+         ${input.payout.reference ? `<br>Reference: <span dir="ltr">${input.payout.reference}</span>` : ""}</p>
+         ${manualTransferDisclosure ? `<p style="color:#667085;font-size:12px">${manualTransferDisclosure}</p>` : ""}`,
   );
 
   const message = await queueMessage({

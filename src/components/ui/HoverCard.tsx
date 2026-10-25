@@ -10,7 +10,7 @@
  *  • Backdrop is pointer-events-none so it never accidentally swallows hover events
  */
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowUpRight, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

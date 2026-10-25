@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, Play } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -40,6 +40,7 @@ export function Hero({ hero, patterns, stats }: Props) {
   /* ── scroll-driven mode (bgImages exist AND not sliderMode forced) ── */
   useEffect(() => {
     if (!bgImages || forceSlider) return;
+    if (window.matchMedia("(max-width: 767px)").matches) return;
     if (!parallaxOn) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -81,8 +82,10 @@ export function Hero({ hero, patterns, stats }: Props) {
 
   /* ── timer-driven mode (no bgImages, OR sliderMode forced) ── */
   useEffect(() => {
-    const useTimer = !bgImages || forceSlider;
-    if (!useTimer) return;
+    const mobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    if (mobileViewport && !bgImages) return;
+    const useTimer = !bgImages || forceSlider || mobileViewport;
+    if (!useTimer || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const slideCount = bgImages ? bgImages.length : patterns.length;
     if (slideCount < 2) return;
     const D = 5200;
@@ -93,20 +96,20 @@ export function Hero({ hero, patterns, stats }: Props) {
       setProgress(p);
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+    if (!mobileViewport) raf = requestAnimationFrame(tick);
     const id = window.setInterval(() => setActive((a) => (a + 1) % slideCount), D);
     return () => {
       cancelAnimationFrame(raf);
       window.clearInterval(id);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patterns.length, forceSlider, bgImages]);
 
   /* ── parallax for timer mode (no bgImages or forceSlider) ── */
   useEffect(() => {
-    const useTimer = !bgImages || forceSlider;
+    const mobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    const useTimer = !bgImages || forceSlider || mobileViewport;
     if (!useTimer) return;
-    if (!parallaxOn) return;
+    if (!parallaxOn || mobileViewport || window.matchMedia("(pointer: coarse)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let ticking = false;
     const onScroll = () => {
@@ -136,17 +139,17 @@ export function Hero({ hero, patterns, stats }: Props) {
   /* ── inner section (shared JSX) ── */
   const inner = (
     <section className={cn(
-      "relative isolate w-full overflow-hidden bg-[#0d1117] text-white",
+      "mobile-hero relative isolate w-full overflow-hidden bg-[#0d1117] text-white",
       (bgImages && !forceSlider) ? "sticky top-0 h-[100svh] min-h-[640px] max-h-[1080px]" : "h-[100svh] min-h-[640px] max-h-[1080px]"
     )}>
       {/* media */}
-      <div ref={mediaRef} className="absolute inset-0 will-change-transform scale-[1.06]">
+      <div ref={mediaRef} className="mobile-hero__media absolute inset-0 will-change-transform scale-[1.06]">
         {hero.video && !videoFailed ? (
           <video src={hero.video} poster={hero.image || undefined} autoPlay muted loop playsInline preload="metadata" onError={() => setFailedVideoUrl(hero.video ?? null)} className="h-full w-full object-cover" />
         ) : slideImages ? (
           slideImages.map((src, i) => (
-            <Image key={src} src={src} alt="" fill priority={i <= 1} quality={100}
-              sizes="(min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
+            <Image key={src} src={src} alt="" fill priority={i === 0}
+              sizes="(max-width: 460px) 280vw, (max-width: 560px) 220vw, (max-width: 767px) 185vw, (min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
               className={cn(
                 "object-cover transition-opacity duration-[1000ms] ease-[var(--ease-out)]",
                 i === activeSlideIndex ? "opacity-100" : "opacity-0"
@@ -154,8 +157,8 @@ export function Hero({ hero, patterns, stats }: Props) {
             />
           ))
         ) : (
-          <Image src={hero.image} alt="" fill priority quality={100}
-            sizes="(min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
+          <Image src={hero.image} alt="" fill priority
+            sizes="(max-width: 460px) 280vw, (max-width: 560px) 220vw, (max-width: 767px) 185vw, (min-width: 3840px) 3840px, (min-width: 2560px) 2560px, (min-width: 1920px) 1920px, 100vw"
             className="object-cover"
           />
         )}
@@ -166,20 +169,20 @@ export function Hero({ hero, patterns, stats }: Props) {
       <div className="absolute inset-0 bg-gradient-to-r from-[#0a0d13]/40 via-transparent to-transparent rtl:bg-gradient-to-l" />
       <div className="pointer-events-none absolute inset-0 [box-shadow:inset_0_0_120px_30px_rgba(5,7,12,.25)]" />
 
-      <div className="container-x relative flex h-full flex-col justify-end pb-10 pt-[calc(var(--announce-h,0px)+var(--header-h))] md:pb-14">
+      <div className="mobile-hero__content container-x relative flex h-full flex-col justify-end pb-10 pt-[calc(var(--announce-h,0px)+var(--header-h))] md:pb-14">
         <div className="grid items-end gap-6 lg:grid-cols-12 lg:gap-10">
           {/* copy */}
-          <div className="lg:col-span-7">
-            <p className="anim-blur-in mb-4 inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-caption backdrop-blur-md" style={{ animationDelay: "80ms" }}>
+          <div className="mobile-hero__copy lg:col-span-7">
+            <p className="mobile-hero__eyebrow anim-blur-in mb-4 inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-caption backdrop-blur-md" style={{ animationDelay: "80ms" }}>
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
               {t(hero.eyebrow, locale)}
             </p>
-            <h1 className="font-display text-display text-balance">
+            <h1 className="mobile-hero__title font-display text-display text-balance">
               <span className="anim-blur-in block" style={{ animationDelay: "160ms" }}>{t(hero.titleA, locale)}</span>
               <span className="anim-blur-in block text-white/90" style={{ animationDelay: "280ms" }}>{t(hero.titleB, locale)}</span>
             </h1>
-            <p className="anim-blur-in mt-5 max-w-xl text-body-lg text-white/75" style={{ animationDelay: "400ms" }}>{t(hero.description, locale)}</p>
-            <div className="anim-fade-up mt-6 flex flex-wrap items-center gap-3" style={{ animationDelay: "520ms" }}>
+            <p className="mobile-hero__description anim-blur-in mt-5 max-w-xl text-body-lg text-white/75" style={{ animationDelay: "400ms" }}>{t(hero.description, locale)}</p>
+            <div className="mobile-hero__actions anim-fade-up mt-6 flex flex-wrap items-center gap-3" style={{ animationDelay: "520ms" }}>
               <Button href={href(locale, hero.ctaHref)} size="lg" magnetic className="bg-white text-[#0f172a] hover:bg-white/90 hover:shadow-elevated">
                 {dict.home.heroCta}
                 <ArrowUpRight className="h-4 w-4 rtl-flip" />
@@ -190,7 +193,7 @@ export function Hero({ hero, patterns, stats }: Props) {
               </Button>
             </div>
             {/* stats */}
-            <dl className="anim-fade-up mt-8 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/15 pt-5 text-white/80" style={{ animationDelay: "640ms" }}>
+            <dl className="mobile-hero__stats anim-fade-up mt-8 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/15 pt-5 text-white/80" style={{ animationDelay: "640ms" }}>
               {[
                 [stats.patterns, dict.home.heroStat1],
                 [stats.artists, dict.home.heroStat2],
@@ -203,6 +206,22 @@ export function Hero({ hero, patterns, stats }: Props) {
                 </div>
               ))}
             </dl>
+            {slideImages && count > 1 && (
+              <div className="mobile-hero__indicators md:hidden" role="group" aria-label={locale === "fa" ? "اسلایدهای معرفی" : "Featured slides"}>
+                {Array.from({ length: count }, (_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setActive(index)}
+                    disabled={!interactiveOn}
+                    aria-label={locale === "fa" ? `اسلاید ${faNum(index + 1)}` : `Slide ${index + 1}`}
+                    aria-current={index === active ? "true" : undefined}
+                  >
+                    <span />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* framed pattern preview */}
@@ -275,7 +294,7 @@ export function Hero({ hero, patterns, stats }: Props) {
   /* scroll-driven: wrap in tall div so sticky section has room to "scroll through" */
   if (bgImages && !forceSlider) {
     return (
-      <div ref={wrapperRef} style={{ height: `${count * 100}svh` }}>
+      <div ref={wrapperRef} className="mobile-hero-scroll-wrapper" style={{ height: `${count * 100}svh` }}>
         {inner}
       </div>
     );

@@ -4,7 +4,7 @@
  * Client wrapper for pattern PDP: keeps Gallery + BuyBox colourway selection in sync
  * (Spoonflower-style — pick a colourway circle, main image updates).
  */
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Check, FileDown, Shield } from "lucide-react";

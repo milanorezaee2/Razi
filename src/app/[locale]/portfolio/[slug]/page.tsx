@@ -1,6 +1,6 @@
 import { isStudioPortfolio, isPublishedPortfolio } from "@/lib/artist/portfolio";
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";

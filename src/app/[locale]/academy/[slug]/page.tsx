@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, Layers, Signal, Users } from "lucide-react";

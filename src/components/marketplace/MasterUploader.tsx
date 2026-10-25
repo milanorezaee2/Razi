@@ -20,7 +20,7 @@ import {
 import { useLocale } from "@/components/providers/AppProviders";
 import { Field, Input } from "@/components/ui/Input";
 import { SESSION_FETCH } from "@/lib/http";
-import { PRODUCT_FAMILIES, familyById } from "@/lib/data/families";
+import { familyById, type ProductFamily } from "@/lib/data/families";
 import {
   EXPORT_FORMATS,
   formatAcceptsUpload,
@@ -126,7 +126,7 @@ function fileSize(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
-export function MasterUploader({ onUploaded }: { onUploaded?: () => void }) {
+export function MasterUploader({ onUploaded, families }: { onUploaded?: () => void; families: ProductFamily[] }) {
   const { locale } = useLocale();
   const fa = locale === "fa";
   const router = useRouter();
@@ -151,7 +151,7 @@ export function MasterUploader({ onUploaded }: { onUploaded?: () => void }) {
   });
   const [colourways, setColourways] = useState<DraftColourway[]>([blankColourway(0)]);
 
-  const chosenFamily = familyById(meta.familyId);
+  const chosenFamily = familyById(families, meta.familyId);
   const categoryHref = chosenFamily ? `${href(locale, "/shop")}?family=${chosenFamily.slug}` : null;
 
   /* ---------- derived state ---------- */
@@ -452,7 +452,7 @@ export function MasterUploader({ onUploaded }: { onUploaded?: () => void }) {
           role="radiogroup"
           aria-label={fa ? "دسته‌بندی اصلی محصول" : "Main product category"}
         >
-          {PRODUCT_FAMILIES.map((family) => {
+          {families.map((family) => {
             const active = meta.familyId === family.id;
             return (
               <button

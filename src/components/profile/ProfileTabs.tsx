@@ -2,7 +2,7 @@
 
 import { artistPortfolioPath } from "@/lib/artist/portfolio";
 import { useState } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { Clock, Paintbrush, Send, ShieldCheck, Star } from "lucide-react";
 import { useLocale } from "@/components/providers/AppProviders";

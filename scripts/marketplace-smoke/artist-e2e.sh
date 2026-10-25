@@ -69,13 +69,14 @@ rows=d.get('pending') or []
 print(rows[0]['id'] if rows else '')")
 echo; echo "payout=$PO"
 
-step "8b. admin marks the payout as paid"
+step "8b. admin records a manually completed bank transfer (the app does not move funds)"
+echo "Smoke evidence below is synthetic; this script does not transfer money."
 if [ -n "$PO" ]; then
   curl -s -c $ADM -b $ADM -X POST $BASE/api/marketplace/admin/payouts -H 'content-type: application/json' \
-    -d "{\"action\":\"approve\",\"payoutId\":\"$PO\",\"reference\":\"BANK-TRACK-9911\"}" | head -c 300
+    -d "{\"action\":\"approve\",\"payoutId\":\"$PO\",\"reference\":\"SMOKE-BANK-TRACK-$PO\"}" | head -c 300
   echo
   curl -s -c $ADM -b $ADM -X POST $BASE/api/marketplace/admin/payouts -H 'content-type: application/json' \
-    -d "{\"action\":\"paid\",\"payoutId\":\"$PO\",\"reference\":\"BANK-TRACK-9911\"}" | head -c 300
+    -d "{\"action\":\"confirm_manual_transfer\",\"payoutId\":\"$PO\",\"reference\":\"SMOKE-BANK-TRACK-$PO\",\"paymentEvidence\":\"SMOKE-TRANSFER-RECEIPT-$PO\",\"manualTransferConfirmed\":true}" | head -c 300
   echo
   curl -s -c $A -b $A "$BASE/api/marketplace/artist/payouts" | python3 -c "
 import sys,json;w=json.load(sys.stdin)['wallet']['balance'];print('wallet after settlement:',json.dumps(w,ensure_ascii=False))"

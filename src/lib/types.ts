@@ -121,6 +121,19 @@ export interface Artist {
   commissionNotice?: Localized;
 }
 
+/**
+ * Editorial approval state of a pattern.
+ *
+ *   "draft"         — the artist is still working on it; nobody else sees it.
+ *   "pending_review"— submitted by the artist, waiting for an admin decision.
+ *   "published"     — visible on the public site.
+ *   "rejected"      — the admin declined it; the artist may revise and resubmit.
+ *
+ * Only "published" patterns reach the public pages. Patterns that predate this
+ * field are migrated to "published" so the existing catalogue does not change.
+ */
+export type PatternStatus = "draft" | "pending_review" | "published" | "rejected";
+
 export interface PatternSpec {
   repeat: Localized;
   dpi: string;
@@ -156,6 +169,15 @@ export interface Pattern {
   categoryId: ID;
   spaceIds: ID[];
   artistId: ID | null; // null → site-owned pattern
+  /**
+   * Editorial approval state. Only "published" patterns are shown publicly.
+   * Site-owned patterns and migrated legacy records are "published".
+   */
+  status?: PatternStatus;
+  /** Admin rejection note, shown to the artist when status is "rejected" */
+  rejectionNote?: string;
+  /** When the pattern was submitted for review / last status change */
+  submittedAt?: string;
   price: { fa: number; en: number };
   specs: PatternSpec;
   /** Accent colours inside the design (legacy / detail strip) */
@@ -624,6 +646,8 @@ export interface PortfolioHeroSettings {
 }
 
 export interface SiteContent {
+  /** Admin-managed product-family taxonomy shared by the shop and marketplace. */
+  productFamilies: import("@/lib/data/families").ProductFamily[];
   categories: Category[];
   spaces: Space[];
   artists: Artist[];

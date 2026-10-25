@@ -1,9 +1,9 @@
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowUpRight, Layers, Sparkles, Truck } from "lucide-react";
 import { Badge, Sku } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { familyName } from "@/lib/data/families";
+import { familyName, type ProductFamily } from "@/lib/data/families";
 import type { Locale } from "@/lib/i18n/types";
 import type { EnrichedProduct } from "@/lib/data/queries";
 import { contentHref, faNum, formatPrice, href, isExternalContentHref, t } from "@/lib/utils";
@@ -24,6 +24,7 @@ interface Props {
   /** every product of the shop — the hero picks its tiles from them */
   products: EnrichedProduct[];
   families: ShopFamilyChip[];
+  productFamilies: ProductFamily[];
   brand: string;
   labels: {
     siteExclusive: string;
@@ -55,7 +56,7 @@ interface Props {
  * Only the hero changes; the shop itself (filters, sorting, sections) is
  * rendered by `ShopFiltered` exactly as before.
  */
-export function ShopHero({ locale, eyebrow, title, description, products, families, brand, labels, banners = [] }: Props) {
+export function ShopHero({ locale, eyebrow, title, description, products, families, productFamilies, brand, labels, banners = [] }: Props) {
   const fa = locale === "fa";
   const num = (n: number) => (fa ? faNum(n) : String(n));
 
@@ -79,7 +80,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
   return (
     <div className="grid gap-3 lg:grid-cols-12 lg:gap-4">
       {/* ── 1 · the boutique panel ─────────────────────────────────────────── */}
-      <article className="relative isolate flex flex-col overflow-hidden rounded-xl bg-[#0d1117] p-8 text-white md:p-10 lg:col-span-5">
+      <article className="relative isolate flex flex-col overflow-hidden rounded-xl bg-[#0d1117] p-5 text-white sm:p-8 md:p-10 lg:col-span-5">
         <span aria-hidden className="pointer-events-none absolute -end-20 -top-24 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
         <span aria-hidden className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
 
@@ -90,7 +91,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         <h1 className="anim-blur-in mt-4 font-display text-h1 text-balance" style={{ animationDelay: "80ms" }}>{title}</h1>
         <p className="anim-blur-in mt-4 max-w-md text-body-lg text-white/70" style={{ animationDelay: "160ms" }}>{description}</p>
 
-        <div className="anim-fade-up mt-8 flex flex-wrap gap-3" style={{ animationDelay: "220ms" }}>
+        <div className="anim-fade-up mt-6 flex flex-wrap gap-3 sm:mt-8" style={{ animationDelay: "220ms" }}>
           <Button href={href(locale, "/shop?owner=site")} variant="accent" size="md">
             {labels.siteExclusive}
           </Button>
@@ -105,9 +106,9 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         </div>
 
         {/* live numbers from the catalogue — anchored to the panel's foot */}
-        <div className="mt-10 flex flex-1 flex-col justify-end">
+        <div className="mt-7 flex flex-1 flex-col justify-end sm:mt-10">
           <div
-            className="anim-fade-up grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+            className="shop-hero__stats anim-fade-up grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
             style={{ animationDelay: "280ms" }}
           >
             {stats.map((stat) => (
@@ -125,14 +126,14 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {lead && (
           <Link
             href={href(locale, `/shop/${lead.slug}`)}
-            className="group relative row-span-2 min-h-[320px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[440px]"
+            className="group relative row-span-2 min-h-[260px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[440px]"
           >
             <Image
               src={getProductColor(lead).image}
               alt={t(lead.title, locale)}
               fill
               priority
-              quality={90}
+              quality={100}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
               className="img-zoom object-cover"
             />
@@ -148,7 +149,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
 
             <div className="absolute inset-x-0 bottom-0 p-5 text-white">
               <p className="text-caption text-white/70">
-                {familyName(lead.familyId, locale) || labels.studio} · {makerOf(lead)}
+                {familyName(productFamilies, lead.familyId, locale) || labels.studio} · {makerOf(lead)}
               </p>
               <p className="mt-1 font-display text-h3">{t(lead.title, locale)}</p>
               <div className="mt-3 flex items-center justify-between gap-3">
@@ -162,7 +163,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {second && (
           <Link
             href={href(locale, `/shop/${second.slug}`)}
-            className="group relative min-h-[200px] overflow-hidden rounded-xl bg-background-secondary"
+            className="group relative min-h-[160px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[200px]"
           >
             <Image
               src={getProductColor(second).image}
@@ -174,7 +175,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 text-white">
               <div className="min-w-0">
-                <p className="truncate text-caption text-white/70">{familyName(second.familyId, locale) || labels.studio}</p>
+                <p className="truncate text-caption text-white/70">{familyName(productFamilies, second.familyId, locale) || labels.studio}</p>
                 <p className="mt-0.5 truncate font-display text-h4">{t(second.title, locale)}</p>
               </div>
               <span className="shrink-0 text-sm font-semibold tabular">{formatPrice(second.price, locale)}</span>

@@ -514,7 +514,7 @@ export async function createOrder(input: CreateOrderInput): Promise<MarketplaceO
   return order;
 }
 
-export async function setOrderStatus(id: string, status: MarketplaceOrderStatus, note?: string): Promise<MarketplaceOrder | null> {
+export async function setOrderStatus(id: string, status: Exclude<MarketplaceOrderStatus, "refunded">, note?: string): Promise<MarketplaceOrder | null> {
   const order = await getOrder(id);
   if (!order) return null;
   return saveOrder({
@@ -779,10 +779,25 @@ async function artistNameFor(artistId: string | null): Promise<Localized> {
 /* Refunds                                                             */
 /* ------------------------------------------------------------------ */
 
-export async function refundOrder(orderId: string, adminEmail: string): Promise<{ ok: boolean; licenses: License[] }> {
+export async function recordManualRefund(
+  orderId: string,
+  adminEmail: string,
+  input: { reference: string; evidence: string; manualRefundConfirmed: boolean },
+): Promise<{
+  ok: boolean;
+  licenses: License[];
+  error?: "not_found" | "order_not_eligible" | "manual_refund_evidence_required" | "manual_refund_confirmation_required";
+}> {
+  if (input.manualRefundConfirmed !== true) {
+    return { ok: false, licenses: [], error: "manual_refund_confirmation_required" };
+  }
+  const reference = input.reference.replace(/[\r\n\u0000]/g, " ").trim().slice(0, 200);
+  const evidence = input.evidence.replace(/[\r\n\u0000]/g, " ").trim().slice(0, 1_000);
+  if (!reference || !evidence) return { ok: false, licenses: [], error: "manual_refund_evidence_required" };
+
   const order = await getOrder(orderId);
-  if (!order) return { ok: false, licenses: [] };
-  if (order.status !== "paid") return { ok: false, licenses: [] };
+  if (!order) return { ok: false, licenses: [], error: "not_found" };
+  if (order.status !== "paid") return { ok: false, licenses: [], error: "order_not_eligible" };
 
   const licenses = (await getLicenses()).filter((license) => license.orderId === orderId);
   for (const license of licenses) {
@@ -790,16 +805,30 @@ export async function refundOrder(orderId: string, adminEmail: string): Promise<
       ...license,
       status: "revoked",
       revokedAt: new Date().toISOString(),
-      revokedReason: `refunded by ${adminEmail}`,
+      revokedReason: `manual refund confirmed by ${adminEmail}`,
     });
   }
 
   const { reversalEntries } = await import("./royalty");
-  const ledger = await readCollection(KEYS.ledger);
-  const reversals = reversalEntries(ledger as never[], orderId);
+  const ledger = await readCollection<LedgerEntry>(KEYS.ledger);
+  const reversals = reversalEntries(ledger, orderId, {
+    fa: "ابطال پس از تأیید بازپرداخت دستی خارج از برنامه",
+    en: "Reversal after operator-confirmed off-app manual refund",
+  });
   for (const entry of reversals) await appendLedger(entry);
 
-  await saveOrder({ ...order, status: "refunded", notes: `${order.notes ?? ""}\nrefunded by ${adminEmail}`.trim() });
+  const refundedAt = new Date().toISOString();
+  await saveOrder({
+    ...order,
+    status: "refunded",
+    refundMode: "manual",
+    refundReference: reference,
+    refundEvidence: evidence,
+    manualRefundConfirmed: true,
+    refundedAt,
+    refundedBy: adminEmail,
+    notes: `${order.notes ?? ""}\nmanual refund confirmed as completed outside the app by ${adminEmail}; reference: ${reference}; evidence: ${evidence}`.trim(),
+  });
 
   /* exclusive licenses return the work to the shop */
   for (const license of licenses.filter((item) => item.exclusive)) {

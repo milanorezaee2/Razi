@@ -17,7 +17,7 @@ export function LocaleChrome({ children, before, after }: { children: React.Reac
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="public-app-shell flex min-h-dvh flex-col">
       {before}
       <main id="main" className="flex-1">
         <PageTransition>{children}</PageTransition>

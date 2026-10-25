@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { Bookmark, Clock, Layers, Radio, Signal } from "lucide-react";
 import { useState } from "react";

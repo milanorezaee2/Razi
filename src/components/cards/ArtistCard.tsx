@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowUpRight, ImageIcon, MapPin, UserRound } from "lucide-react";
 import { useLocale } from "@/components/providers/AppProviders";

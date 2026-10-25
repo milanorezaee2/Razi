@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -40,6 +40,9 @@ import type { Localized } from "@/lib/i18n/types";
  */
 
 type View = "dashboard" | "queue" | "assets" | "orders" | "payouts" | "outbox" | "integrations" | "settings";
+
+type TierPriceDraft = { priceFa: string; priceEn: string; enabled: boolean };
+type TierPricingPatch = { id: string; priceFa: number; priceEn: number; enabled: boolean };
 
 interface Analytics {
   range: { from: string; to: string; days: number };
@@ -123,6 +126,29 @@ interface QueueItem {
   warnings: Localized[];
 }
 
+function createTierPriceDrafts(items: QueueItem[]): Record<string, Record<string, TierPriceDraft>> {
+  return Object.fromEntries(
+    items.map(({ asset }) => [
+      asset.id,
+      Object.fromEntries(asset.tiers.map((tier) => [
+        tier.id,
+        { priceFa: String(tier.price.fa), priceEn: String(tier.price.en), enabled: tier.enabled },
+      ])),
+    ]),
+  );
+}
+
+function tierPricingErrorMessage(error: string, fa: boolean) {
+  const messages: Record<string, { fa: string; en: string }> = {
+    invalid_tiers: { fa: "ساختار رده‌های قیمت نامعتبر است.", en: "Invalid tier pricing payload." },
+    invalid_tier_patch: { fa: "ویرایش یکی از رده‌های قیمت نامعتبر است.", en: "One of the tier edits is invalid." },
+    unknown_tier: { fa: "ردهٔ قیمت پیدا نشد؛ صف را تازه کنید.", en: "Tier not found. Refresh the review queue." },
+    duplicate_tier: { fa: "یک ردهٔ قیمت بیش از یک‌بار ارسال شده است.", en: "A tier was submitted more than once." },
+    invalid_tier_price: { fa: "قیمت باید عددی نامنفی و در محدودهٔ معتبر باشد.", en: "Prices must be valid non-negative numbers." },
+  };
+  return messages[error]?.[fa ? "fa" : "en"] ?? error;
+}
+
 interface ManagedAssetRow {
   id: string;
   slug: string;
@@ -144,6 +170,12 @@ interface OrderRow {
   status: string;
   createdAt: string;
   fulfillment: { completedAt?: string };
+  refundMode?: "manual";
+  refundReference?: string;
+  refundEvidence?: string;
+  manualRefundConfirmed?: boolean;
+  refundedAt?: string;
+  refundedBy?: string;
 }
 
 interface PayoutRow {
@@ -156,6 +188,35 @@ interface PayoutRow {
   requestedAt: string;
   reference?: string;
   note?: string;
+  settlementMode?: "manual";
+  manualTransferConfirmed?: boolean;
+  manualTransferConfirmedAt?: string;
+  manualTransferConfirmedBy?: string;
+  paymentEvidence?: string;
+}
+
+function hasManualTransferConfirmation(payout: PayoutRow): boolean {
+  return payout.status === "paid"
+    && payout.settlementMode === "manual"
+    && payout.manualTransferConfirmed === true
+    && Boolean(payout.manualTransferConfirmedAt)
+    && Boolean(payout.manualTransferConfirmedBy?.trim())
+    && Boolean(payout.reference?.trim())
+    && Boolean(payout.paymentEvidence?.trim());
+}
+
+function payoutStatusLabel(payout: PayoutRow, fa: boolean): string {
+  if (payout.status === "paid") {
+    return hasManualTransferConfirmation(payout)
+      ? (fa ? "تأیید دستی انتقال بانکی (خارج از برنامه)" : "Manual off-app bank transfer confirmed")
+      : (fa ? "نیازمند تطبیق تأیید دستی" : "Manual confirmation reconciliation required");
+  }
+  const labels: Record<string, { fa: string; en: string }> = {
+    requested: { fa: "درخواست‌شده", en: "Requested" },
+    approved: { fa: "تأیید اولیه", en: "Approved" },
+    rejected: { fa: "ردشده", en: "Rejected" },
+  };
+  return labels[payout.status]?.[fa ? "fa" : "en"] ?? payout.status;
 }
 
 interface OutboxRow {
@@ -175,6 +236,7 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
   const [analysis, setAnalysis] = useState<Analytics | null>(null);
   const [status, setStatus] = useState<StatusPayload | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [tierPriceDrafts, setTierPriceDrafts] = useState<Record<string, Record<string, TierPriceDraft>>>({});
   const [assets, setAssets] = useState<ManagedAssetRow[]>([]);
   const [assetFilter, setAssetFilter] = useState("");
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -188,6 +250,9 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
   const [rejectNote, setRejectNote] = useState<Record<string, string>>({});
   const [payoutReference, setPayoutReference] = useState<Record<string, string>>({});
   const [payoutNote, setPayoutNote] = useState<Record<string, string>>({});
+  const [payoutEvidence, setPayoutEvidence] = useState<Record<string, string>>({});
+  const [orderRefundReference, setOrderRefundReference] = useState<Record<string, string>>({});
+  const [orderRefundEvidence, setOrderRefundEvidence] = useState<Record<string, string>>({});
 
   const load = useCallback(
     async (target: View = view) => {
@@ -208,7 +273,11 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
           setStatus(data.status as StatusPayload);
           setSettings((data.status as StatusPayload).settings);
         }
-        if (target === "queue") setQueue((data.items as QueueItem[]) ?? []);
+        if (target === "queue") {
+          const items = (data.items as QueueItem[]) ?? [];
+          setQueue(items);
+          setTierPriceDrafts(createTierPriceDrafts(items));
+        }
         if (target === "assets") setAssets((data.items as ManagedAssetRow[]) ?? []);
         if (target === "orders") setOrders((data.orders as OrderRow[]) ?? []);
         if (target === "payouts") setPayouts(data as never);
@@ -247,30 +316,76 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
     [],
   );
 
-  async function review(action: "approve" | "reject" | "rescan" | "regenerate", assetId: string, note?: string) {
+  async function review(action: "approve" | "save_tiers" | "reject" | "rescan" | "regenerate", assetId: string, note?: string) {
+    let tiers: TierPricingPatch[] | undefined;
+    if (action === "approve" || action === "save_tiers") {
+      const item = queue.find((entry) => entry.asset.id === assetId);
+      if (!item) return;
+      const drafts = item.asset.tiers.map((tier) => {
+        const draft = tierPriceDrafts[assetId]?.[tier.id] ?? {
+          priceFa: String(tier.price.fa),
+          priceEn: String(tier.price.en),
+          enabled: tier.enabled,
+        };
+        return { id: tier.id, priceFa: draft.priceFa.trim(), priceEn: draft.priceEn.trim(), enabled: draft.enabled };
+      });
+      const invalidPrice = drafts.some((draft) => {
+        const priceFa = Number(draft.priceFa);
+        const priceEn = Number(draft.priceEn);
+        return !draft.priceFa || !draft.priceEn || !Number.isFinite(priceFa) || !Number.isFinite(priceEn) || priceFa < 0 || priceEn < 0;
+      });
+      if (invalidPrice) {
+        setNotice(fa ? "برای هر رده، قیمت نامنفی تومان و دلار وارد کنید." : "Enter a non-negative toman and USD price for each tier.");
+        return;
+      }
+      tiers = drafts.map((draft) => ({
+        id: draft.id,
+        priceFa: Number(draft.priceFa),
+        priceEn: Number(draft.priceEn),
+        enabled: draft.enabled,
+      }));
+    }
+
     setBusy(`${action}:${assetId}`);
     try {
-      const data = await post("/api/marketplace/admin/review", { action, assetId, note, publish: true });
-      setNotice(
-        data.ok
-          ? action === "approve"
-            ? fa
-              ? "اثر تأیید و منتشر شد."
-              : "Approved and published."
-            : action === "reject"
-              ? fa
-                ? "اثر رد شد."
-                : "Rejected."
-              : action === "rescan"
-                ? fa
-                  ? "اسکن مجدد انجام شد."
-                  : "Rescanned."
-                : fa
-                  ? "پیش‌نمایش‌ها بازسازی شد."
-                  : "Derivatives rebuilt."
-          : String(data.error ?? "failed"),
-      );
-      setQueue((current) => (action === "approve" || action === "reject" ? current.filter((item) => item.asset.id !== assetId) : current));
+      const data = await post("/api/marketplace/admin/review", {
+        action,
+        assetId,
+        ...(note ? { note } : {}),
+        ...(action === "approve" ? { publish: true } : {}),
+        ...(tiers ? { tiers } : {}),
+      });
+      if (!data.ok) {
+        setNotice(tierPricingErrorMessage(String(data.error ?? "failed"), fa));
+        return;
+      }
+
+      if (action === "approve") {
+        setNotice(fa ? "قیمت‌ها ذخیره شد؛ اثر تأیید و منتشر شد." : "Prices saved; asset approved and published.");
+      } else if (action === "save_tiers") {
+        setNotice(fa ? "قیمت و وضعیت لایسنس‌ها ذخیره شد؛ اثر همچنان در صف بازبینی است." : "Tier pricing saved; the asset remains in review.");
+        const savedTiers = (data.asset as { tiers?: QueueItem["asset"]["tiers"] } | undefined)?.tiers;
+        if (savedTiers) {
+          setQueue((current) => current.map((item) => item.asset.id === assetId ? { ...item, asset: { ...item.asset, tiers: savedTiers } } : item));
+          setTierPriceDrafts((current) => ({
+            ...current,
+            [assetId]: Object.fromEntries(savedTiers.map((tier) => [
+              tier.id,
+              { priceFa: String(tier.price.fa), priceEn: String(tier.price.en), enabled: tier.enabled },
+            ])),
+          }));
+        }
+      } else if (action === "reject") {
+        setNotice(fa ? "اثر رد شد." : "Rejected.");
+      } else if (action === "rescan") {
+        setNotice(fa ? "اسکن مجدد انجام شد." : "Rescanned.");
+      } else {
+        setNotice(fa ? "پیش‌نمایش‌ها بازسازی شد." : "Derivatives rebuilt.");
+      }
+
+      if (action === "approve" || action === "reject") {
+        setQueue((current) => current.filter((item) => item.asset.id !== assetId));
+      }
     } finally {
       setBusy(null);
     }
@@ -320,35 +435,59 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
     }
   }
 
-  async function orderAction(action: "fulfill" | "refund" | "deliver_again", orderId: string) {
-    if (action === "refund") {
+  async function orderAction(action: "fulfill" | "record_manual_refund" | "deliver_again", orderId: string) {
+    let manualRefundDetails: {
+      refundReference: string;
+      refundEvidence: string;
+      manualRefundConfirmed: true;
+    } | undefined;
+    if (action === "record_manual_refund") {
       const order = orders.find((item) => item.id === orderId);
       const total = order ? formatPrice(order.total, locale) : orderId;
+      const refundReference = orderRefundReference[orderId]?.trim() ?? "";
+      const refundEvidence = orderRefundEvidence[orderId]?.trim() ?? "";
+      if (!refundReference || !refundEvidence) {
+        setNotice(fa ? "برای ثبت تأیید بازپرداخت دستی، مرجع بانکی/درگاه و مدرک انتقال را وارد کنید." : "Enter the bank/provider reference and transfer evidence before recording a manual refund confirmation.");
+        return;
+      }
       const message = fa
-        ? `سفارش ${orderId} به مبلغ ${total} به‌عنوان بازپرداخت‌شده ثبت می‌شود. بازپرداخت واقعی وجه باید جداگانه در درگاه انجام شود؛ این عملیات وجهی منتقل نمی‌کند. لایسنس‌های صادرشده لغو و گردش مالی مارکت‌پلیس معکوس می‌شود. ادامه می‌دهید؟`
-        : `Record order ${orderId} (${total}) as refunded? This does not return money through the gateway; process the actual refund separately. Issued licenses will be revoked and marketplace ledger entries reversed.`;
+        ? `این پنل وجهی را منتقل یا از درگاه بازنمی‌گرداند. فقط پس از تکمیل واقعی بازپرداخت خارج از برنامه در بانک یا پنل ارائه‌دهنده ادامه دهید. با ادامه، تأیید می‌کنید انتقال انجام شده و مرجع/مدرک درست است؛ برنامه فقط وضعیت داخلی، ledger و لایسنس‌ها را ثبت/به‌روزرسانی می‌کند. سفارش ${orderId} (${total}). تأیید می‌کنید؟`
+        : `This panel does not transfer or return funds. Continue only after the actual refund has been completed outside the app through the bank or provider dashboard. By continuing, you confirm the transfer is complete and the reference/evidence are accurate; this app only updates internal order, ledger, and license records. Order ${orderId} (${total}). Confirm?`;
       if (!window.confirm(message)) return;
+      manualRefundDetails = { refundReference, refundEvidence, manualRefundConfirmed: true };
     }
     setBusy(`${action}:${orderId}`);
     try {
-      const data = await post("/api/marketplace/admin/orders", { action, orderId });
-      setNotice(data.ok ? (fa ? "انجام شد." : "Done.") : String(data.error ?? "failed"));
+      const data = await post("/api/marketplace/admin/orders", { action, orderId, ...manualRefundDetails });
+      setNotice(data.ok
+        ? action === "record_manual_refund"
+          ? (fa ? "تأیید بازپرداخت دستیِ انجام‌شده خارج از برنامه ثبت شد؛ این پنل انتقال وجهی انجام نداد." : "Off-app manual refund confirmation recorded; this app did not transfer funds.")
+          : (fa ? "انجام شد." : "Done.")
+        : String(data.error ?? "failed"));
       void load("orders");
     } finally {
       setBusy(null);
     }
   }
 
-  async function payoutAction(action: "approve" | "reject" | "paid", payoutId: string) {
-    const payout = payouts?.pending.find((item) => item.id === payoutId);
+  async function payoutAction(action: "approve" | "reject" | "confirm_manual_transfer", payoutId: string) {
+    const payout = payouts?.pending.find((item) => item.id === payoutId)
+      ?? payouts?.recent.find((item) => item.id === payoutId);
     if (!payout) return;
+    const needsReconciliation = payout.status === "paid" && !hasManualTransferConfirmation(payout);
     if (action === "approve" && payout.status !== "requested") return;
-    if (action === "paid" && payout.status !== "approved") return;
+    if (action === "confirm_manual_transfer" && payout.status !== "approved" && !needsReconciliation) return;
     if (action === "reject" && payout.status !== "requested" && payout.status !== "approved") return;
-    if (action === "paid") {
+    const reference = payoutReference[payoutId]?.trim() || payout.reference || "";
+    const evidence = payoutEvidence[payoutId]?.trim() || payout.paymentEvidence || "";
+    if (action === "confirm_manual_transfer") {
+      if (!reference || !evidence) {
+        setNotice(fa ? "برای تأیید انتقال دستی، مرجع بانکی و مدرک انتقال را وارد کنید." : "Enter both the bank reference and transfer evidence before confirming a manual payout.");
+        return;
+      }
       const message = fa
-        ? `تسویهٔ ${formatPrice(payout.amount, locale)} برای هنرمند ${payout.artistId} به‌صورت پرداخت‌شده ثبت شود؟ فقط پس از انتقال واقعی وجه تأیید کنید.`
-        : `Mark ${formatPrice(payout.amount, locale)} for artist ${payout.artistId} as paid? Only confirm after the transfer is complete.`;
+        ? `تسویهٔ ${formatPrice(payout.amount, locale)} برای هنرمند ${payout.artistId} به‌عنوان «تأیید دستی انتقال» ثبت شود؟ این برنامه وجه را منتقل نمی‌کند؛ فقط پس از انتقال واقعی خارج از برنامه و ثبت مرجع/مدرک تأیید کنید.`
+        : `Record a manual transfer confirmation for ${formatPrice(payout.amount, locale)} to artist ${payout.artistId}? This app does not transfer funds; confirm only after the off-app bank transfer and its reference/evidence are recorded.`;
       if (!window.confirm(message)) return;
     }
     setBusy(`${action}:${payoutId}`);
@@ -356,10 +495,16 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
       const data = await post("/api/marketplace/admin/payouts", {
         action,
         payoutId,
-        reference: payoutReference[payoutId]?.trim() || undefined,
+        reference: reference || undefined,
         note: payoutNote[payoutId]?.trim() || undefined,
+        paymentEvidence: action === "confirm_manual_transfer" ? evidence : undefined,
+        manualTransferConfirmed: action === "confirm_manual_transfer" ? true : undefined,
       });
-      setNotice(data.ok ? (fa ? "وضعیت تسویه به‌روزرسانی شد." : "Payout updated.") : String(data.error ?? "failed"));
+      setNotice(data.ok
+        ? action === "confirm_manual_transfer"
+          ? (fa ? "تأیید دستی انتقال خارج از برنامه ثبت شد؛ این سامانه وجهی منتقل نکرد." : "Off-app manual transfer confirmation recorded; this app did not transfer funds.")
+          : (fa ? "وضعیت تسویه به‌روزرسانی شد." : "Payout updated.")
+        : String(data.error ?? "failed"));
       void load("payouts");
     } finally {
       setBusy(null);
@@ -457,10 +602,13 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                 />
               ))}
             </div>
-            <p className="mt-2 text-caption text-foreground-secondary">
+            <p
+              className="mt-2 text-caption text-foreground-secondary"
+              title={fa ? "این عدد فقط تعداد لایسنس‌های باطل‌شده است و انتقال وجه را نشان نمی‌دهد." : "This counts revoked licenses only; it does not represent refund money transfers."}
+            >
               {fa
-                ? `بازدید: ${analysis.totals.views} · دانلود: ${analysis.totals.downloads} · نرخ تبدیل: ${analysis.totals.conversionPct}% · بازگشت: ${analysis.totals.refunds}`
-                : `Views ${analysis.totals.views} · downloads ${analysis.totals.downloads} · conversion ${analysis.totals.conversionPct}% · refunds ${analysis.totals.refunds}`}
+                ? `بازدید: ${analysis.totals.views} · دانلود: ${analysis.totals.downloads} · نرخ تبدیل: ${analysis.totals.conversionPct}% · لایسنس‌های باطل‌شده: ${analysis.totals.refunds}`
+                : `Views ${analysis.totals.views} · downloads ${analysis.totals.downloads} · conversion ${analysis.totals.conversionPct}% · revoked licenses ${analysis.totals.refunds}`}
             </p>
           </div>
 
@@ -585,6 +733,112 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                     </div>
                   )}
 
+                  <div className="mt-3 rounded-xl border border-border bg-background-secondary/40 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="text-caption font-medium">{fa ? "بازبینی قیمت رده‌های لایسنس" : "Moderate license tier pricing"}</p>
+                        <p className="mt-1 text-caption text-foreground-secondary">
+                          {fa
+                            ? "فقط قیمت و فعال‌بودن رده قابل‌ویرایش است؛ شرایط و محدودیت‌های لایسنس تغییر نمی‌کند. قیمت را جداگانه ذخیره کنید یا هنگام تأیید اعمال کنید."
+                            : "Only prices and tier availability can be changed here; license terms and limits stay fixed. Save pricing or apply it when approving."}
+                        </p>
+                      </div>
+                      <Badge tone="outline">{fa ? "تومان · دلار" : "Toman · USD"}</Badge>
+                    </div>
+                    {item.asset.tiers.length === 0 ? (
+                      <p className="mt-3 text-caption text-warning">
+                        {fa ? "برای این اثر ردهٔ لایسنسی ثبت نشده است." : "No license tiers are configured for this work."}
+                      </p>
+                    ) : (
+                      <div className="mt-3 space-y-2">
+                        {item.asset.tiers.map((tier) => {
+                          const draft = tierPriceDrafts[item.asset.id]?.[tier.id] ?? {
+                            priceFa: String(tier.price.fa),
+                            priceEn: String(tier.price.en),
+                            enabled: tier.enabled,
+                          };
+                          const checkboxId = `review-tier-${item.asset.id}-${tier.id}`;
+                          const disabled = busy !== null;
+                          return (
+                            <div key={tier.id} className="grid gap-2 rounded-lg border border-border/70 p-3 sm:grid-cols-[minmax(9rem,1fr)_minmax(7rem,0.8fr)_minmax(7rem,0.8fr)] sm:items-center">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <input
+                                  id={checkboxId}
+                                  type="checkbox"
+                                  checked={draft.enabled}
+                                  disabled={disabled}
+                                  onChange={(event) => setTierPriceDrafts((current) => ({
+                                    ...current,
+                                    [item.asset.id]: {
+                                      ...current[item.asset.id],
+                                      [tier.id]: { ...draft, enabled: event.target.checked },
+                                    },
+                                  }))}
+                                  aria-label={`${fa ? "فعال بودن لایسنس" : "Enable license tier"}: ${fa ? tier.title.fa : tier.title.en}`}
+                                />
+                                <label htmlFor={checkboxId} className="min-w-0 cursor-pointer">
+                                  <span className="block truncate font-medium">{fa ? tier.title.fa : tier.title.en}</span>
+                                  <span className="block text-muted" dir="ltr">{tier.kind}</span>
+                                </label>
+                              </div>
+                              <label className="flex items-center gap-2 text-caption">
+                                <span className="shrink-0 text-foreground-secondary">{fa ? "تومان" : "Toman"}</span>
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min={0}
+                                  step={1}
+                                  value={draft.priceFa}
+                                  disabled={disabled}
+                                  onChange={(event) => setTierPriceDrafts((current) => ({
+                                    ...current,
+                                    [item.asset.id]: {
+                                      ...current[item.asset.id],
+                                      [tier.id]: { ...draft, priceFa: event.target.value },
+                                    },
+                                  }))}
+                                  aria-label={`${fa ? "قیمت به تومان" : "Toman price"}: ${fa ? tier.title.fa : tier.title.en}`}
+                                  className="min-w-0 w-full rounded-md border border-border bg-transparent px-2 py-1.5 text-end"
+                                  dir="ltr"
+                                />
+                              </label>
+                              <label className="flex items-center gap-2 text-caption">
+                                <span className="shrink-0 text-foreground-secondary">{fa ? "دلار" : "USD"}</span>
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  min={0}
+                                  step="0.01"
+                                  value={draft.priceEn}
+                                  disabled={disabled}
+                                  onChange={(event) => setTierPriceDrafts((current) => ({
+                                    ...current,
+                                    [item.asset.id]: {
+                                      ...current[item.asset.id],
+                                      [tier.id]: { ...draft, priceEn: event.target.value },
+                                    },
+                                  }))}
+                                  aria-label={`${fa ? "قیمت به دلار" : "USD price"}: ${fa ? tier.title.fa : tier.title.en}`}
+                                  className="min-w-0 w-full rounded-md border border-border bg-transparent px-2 py-1.5 text-end"
+                                  dir="ltr"
+                                />
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      disabled={item.asset.tiers.length === 0 || busy !== null}
+                      onClick={() => review("save_tiers", item.asset.id)}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-border px-4 py-1.5 text-caption hover:border-foreground disabled:opacity-50"
+                    >
+                      {busy === `save_tiers:${item.asset.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                      {fa ? "ذخیره قیمت‌ها" : "Save pricing"}
+                    </button>
+                  </div>
+
                   {item.warnings.length > 0 && (
                     <ul className="mt-2 space-y-1 text-caption text-warning">
                       {item.warnings.map((warning) => (
@@ -632,7 +886,7 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                     />
                     <button
                       type="button"
-                      disabled={busy === `approve:${item.asset.id}`}
+                      disabled={busy !== null || item.asset.tiers.length === 0}
                       onClick={() => review("approve", item.asset.id)}
                       className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-caption text-background disabled:opacity-60"
                     >
@@ -641,24 +895,27 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                     </button>
                     <button
                       type="button"
+                      disabled={busy !== null}
                       onClick={() => review("reject", item.asset.id, rejectNote[item.asset.id])}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-caption hover:border-error hover:text-error"
+                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-caption hover:border-error hover:text-error disabled:opacity-50"
                     >
                       <Ban className="h-3.5 w-3.5" />
                       {fa ? "رد" : "Reject"}
                     </button>
                     <button
                       type="button"
+                      disabled={busy !== null}
                       onClick={() => review("rescan", item.asset.id)}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-caption"
+                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-caption disabled:opacity-50"
                     >
                       <ShieldCheck className="h-3.5 w-3.5" />
                       {fa ? "اسکن مجدد" : "Rescan"}
                     </button>
                     <button
                       type="button"
+                      disabled={busy !== null}
                       onClick={() => review("regenerate", item.asset.id)}
-                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-caption"
+                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-caption disabled:opacity-50"
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
                       {fa ? "بازسازی پیش‌نمایش" : "Rebuild previews"}
@@ -785,32 +1042,85 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                     </td>
                     <td className="p-2">{formatPrice(order.total, locale)}</td>
                     <td className="p-2">
-                      <Badge tone={order.status === "paid" ? "success" : order.status === "refunded" ? "error" : "warning"}>{order.status}</Badge>
+                      <Badge tone={order.status === "paid" ? "success" : order.status === "refunded" ? "error" : "warning"}>
+                        {order.status === "refunded"
+                          ? order.refundMode === "manual" && order.manualRefundConfirmed === true
+                            ? (fa ? "بازپرداخت دستی خارج از برنامه تأیید شد" : "Manual off-app refund confirmed")
+                            : (fa ? "وضعیت بازپرداخت نیازمند تطبیق" : "Refund status needs reconciliation")
+                          : order.status === "paid"
+                            ? (fa ? "پرداخت‌شده" : "Paid")
+                            : order.status}
+                      </Badge>
+                      {order.status === "refunded" && order.refundMode === "manual" && (
+                        <div className="mt-2 max-w-64 space-y-1 break-words text-xs text-foreground-secondary">
+                          {order.manualRefundConfirmed !== true && (
+                            <p>{fa ? "تأیید اپراتور در سابقه ثبت نشده است." : "Operator confirmation is missing from this record."}</p>
+                          )}
+                          {order.refundReference && (
+                            <p>{fa ? "مرجع انتقال:" : "Transfer reference:"} <span dir="ltr" className="break-all">{order.refundReference}</span></p>
+                          )}
+                          {order.refundEvidence && (
+                            <p>{fa ? "مدرک:" : "Evidence:"} <span dir="ltr" className="break-all">{order.refundEvidence}</span></p>
+                          )}
+                          {order.refundedBy && (
+                            <p>{fa ? "اپراتور تأییدکننده:" : "Confirmed by:"} <span dir="ltr" className="break-all">{order.refundedBy}</span></p>
+                          )}
+                          {order.refundedAt && (
+                            <p>{fa ? "زمان ثبت:" : "Recorded at:"} <span dir="ltr">{order.refundedAt}</span></p>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="p-2">{order.fulfillment?.completedAt ? (fa ? "انجام‌شده" : "complete") : "—"}</td>
                     <td className="p-2">
-                      <div className="flex flex-wrap gap-1">
-                        <button
-                          type="button"
-                          onClick={() => orderAction("fulfill", order.id)}
-                          className="rounded-full border border-border px-2 py-1"
-                          disabled={busy === `fulfill:${order.id}`}
-                        >
-                          {fa ? "صدور لایسنس" : "Fulfil"}
-                        </button>
-                        <button type="button" onClick={() => orderAction("deliver_again", order.id)} className="rounded-full border border-border px-2 py-1">
-                          {fa ? "ارسال مجدد ایمیل" : "Re-send mail"}
-                        </button>
+                      <div className="flex min-w-64 flex-col gap-2">
                         {order.status === "paid" && (
+                          <div className="grid gap-1">
+                            <p className="text-xs text-foreground-secondary">
+                              {fa
+                                ? "ثبت فقط دستی و خارج از برنامه است؛ انتقال واقعی را این پنل انجام نمی‌دهد. پس از تکمیل انتقال و تأیید اپراتور ثبت کنید."
+                                : "Manual/off-app record only: this panel does not transfer funds. Record only after the transfer is complete and an operator confirms it."}
+                            </p>
+                            <input
+                              value={orderRefundReference[order.id] ?? ""}
+                              onChange={(event) => setOrderRefundReference((current) => ({ ...current, [order.id]: event.target.value }))}
+                              dir="ltr"
+                              placeholder={fa ? "مرجع انتقالِ انجام‌شده در بانک/درگاه" : "Completed bank/provider transfer reference"}
+                              aria-label={fa ? "مرجع انتقال انجام‌شده" : "Completed transfer reference"}
+                              className="rounded-md border border-border bg-transparent px-2 py-1.5 text-xs"
+                            />
+                            <input
+                              value={orderRefundEvidence[order.id] ?? ""}
+                              onChange={(event) => setOrderRefundEvidence((current) => ({ ...current, [order.id]: event.target.value }))}
+                              placeholder={fa ? "شناسه یا پیوند رسید انتقال" : "Transfer receipt ID or evidence link"}
+                              aria-label={fa ? "مدرک انتقال وجه" : "Transfer evidence"}
+                              className="rounded-md border border-border bg-transparent px-2 py-1.5 text-xs"
+                            />
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1">
                           <button
                             type="button"
-                            disabled={busy !== null}
-                            onClick={() => orderAction("refund", order.id)}
-                            className="rounded-full border border-border px-2 py-1 hover:border-error hover:text-error disabled:opacity-50"
+                            onClick={() => orderAction("fulfill", order.id)}
+                            className="rounded-full border border-border px-2 py-1"
+                            disabled={busy === `fulfill:${order.id}`}
                           >
-                            {fa ? "ثبت بازپرداخت" : "Record refund"}
+                            {fa ? "صدور لایسنس" : "Fulfil"}
                           </button>
-                        )}
+                          <button type="button" onClick={() => orderAction("deliver_again", order.id)} className="rounded-full border border-border px-2 py-1">
+                            {fa ? "ارسال مجدد ایمیل" : "Re-send mail"}
+                          </button>
+                          {order.status === "paid" && (
+                            <button
+                              type="button"
+                              disabled={busy !== null || !orderRefundReference[order.id]?.trim() || !orderRefundEvidence[order.id]?.trim()}
+                              onClick={() => orderAction("record_manual_refund", order.id)}
+                              className="rounded-full border border-border px-2 py-1 hover:border-error hover:text-error disabled:opacity-50"
+                            >
+                              {fa ? "تأیید و ثبت بازپرداخت دستی" : "Confirm and record manual refund"}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -833,17 +1143,29 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
           <div className="rounded-2xl border border-border p-5 lg:col-span-1">
             <p className="text-sm font-medium">{fa ? "خلاصه تسویه‌ها" : "Payout summary"}</p>
             <dl className="mt-3 space-y-2 text-caption">
-              {(["requested", "approved", "paid", "rejected"] as const).map((key) => (
-                <div key={key} className="flex justify-between">
-                  <dt className="text-foreground-secondary">{key}</dt>
-                  <dd>{formatPrice(payouts.summary[key] ?? { fa: 0, en: 0 }, locale)}</dd>
+              {([
+                ["requested", fa ? "درخواست‌شده" : "Requested"],
+                ["approved", fa ? "تأییدشده" : "Approved"],
+                ["manualTransferConfirmed", fa ? "تأیید دستی انتقال بانکی (خارج از برنامه)" : "Manual off-app transfer confirmed"],
+                ["needsReconciliation", fa ? "نیازمند تطبیق تأیید" : "Needs confirmation reconciliation"],
+                ["rejected", fa ? "ردشده" : "Rejected"],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="flex justify-between gap-3">
+                  <dt className="text-foreground-secondary">{label}</dt>
+                  <dd className="shrink-0">{formatPrice(payouts.summary[key] ?? { fa: 0, en: 0 }, locale)}</dd>
                 </div>
               ))}
             </dl>
+            <p className="mt-3 text-xs text-foreground-secondary">
+              {fa
+                ? "مبالغِ نیازمند تطبیق از موجودی قابل‌درخواست کسر می‌مانند، اما تا ثبت تأیید دستی معتبر، پرداخت‌شده تلقی نمی‌شوند."
+                : "Amounts needing reconciliation remain withheld from the artist's available balance, but are not presented as paid until valid manual confirmation is recorded."}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-border p-5 lg:col-span-2">
             <p className="text-sm font-medium">{fa ? "درخواست‌های در انتظار" : "Pending requests"}</p>
+            <p className="mt-1 text-xs text-foreground-secondary">{fa ? "انتقال بانکی خودکار پیکربندی نشده است. فقط پس از واریز واقعی، مرجع بانکی و مدرک انتقال را ثبت و وضعیت را دستی تأیید کنید." : "No automatic bank-transfer provider is connected. After the actual transfer, record its bank reference and evidence, then confirm it manually."}</p>
             <ul className="mt-3 space-y-3 text-caption">
               {payouts.pending.map((payout) => (
                 <li key={payout.id} className="rounded-lg border border-border p-3">
@@ -857,18 +1179,27 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                     {fa ? "هنرمند" : "Artist"}: <span dir="ltr">{payout.artistId}</span> ·{" "}
                     {new Date(payout.requestedAt).toLocaleDateString(fa ? "fa-IR" : "en-GB")}
                   </p>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <input
                       value={payoutReference[payout.id] ?? payout.reference ?? ""}
                       onChange={(event) => setPayoutReference((current) => ({ ...current, [payout.id]: event.target.value }))}
                       dir="ltr"
-                      placeholder={fa ? "شماره پیگیری / مرجع پرداخت" : "Transfer reference"}
+                      placeholder={fa ? "شماره پیگیری / مرجع انتقال" : "Bank transfer reference"}
+                      aria-label={fa ? "مرجع انتقال بانکی" : "Bank transfer reference"}
                       className="rounded-md border border-border bg-transparent px-3 py-2 text-caption"
                     />
                     <input
                       value={payoutNote[payout.id] ?? payout.note ?? ""}
                       onChange={(event) => setPayoutNote((current) => ({ ...current, [payout.id]: event.target.value }))}
                       placeholder={fa ? "یادداشت داخلی" : "Internal note"}
+                      aria-label={fa ? "یادداشت داخلی" : "Internal note"}
+                      className="rounded-md border border-border bg-transparent px-3 py-2 text-caption"
+                    />
+                    <input
+                      value={payoutEvidence[payout.id] ?? payout.paymentEvidence ?? ""}
+                      onChange={(event) => setPayoutEvidence((current) => ({ ...current, [payout.id]: event.target.value }))}
+                      placeholder={fa ? "پیوند یا شناسهٔ مدرک انتقال" : "Transfer receipt / evidence link"}
+                      aria-label={fa ? "مدرک انتقال دستی" : "Manual transfer evidence"}
                       className="rounded-md border border-border bg-transparent px-3 py-2 text-caption"
                     />
                   </div>
@@ -886,11 +1217,12 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
                     {payout.status === "approved" && (
                       <button
                         type="button"
-                        disabled={busy !== null}
-                        onClick={() => payoutAction("paid", payout.id)}
+                        disabled={busy !== null || !(payoutReference[payout.id]?.trim() || payout.reference) || !(payoutEvidence[payout.id]?.trim() || payout.paymentEvidence)}
+                        onClick={() => payoutAction("confirm_manual_transfer", payout.id)}
                         className="rounded-full bg-foreground px-3 py-1.5 text-background disabled:opacity-50"
+                        title={fa ? "برای ثبت تأیید انتقال دستی، مرجع بانکی و مدرک پرداخت الزامی است." : "A transfer reference and payment evidence are required to confirm a manual payout."}
                       >
-                        {fa ? "پرداخت شد" : "Mark paid"}
+                        {fa ? "تأیید دستی انتقال بانکی" : "Confirm manual bank transfer"}
                       </button>
                     )}
                     <button
@@ -910,15 +1242,57 @@ export function AdminConsole({ locale }: { locale: "fa" | "en" }) {
             {payouts.recent.length > 0 && (
               <>
                 <p className="mt-6 text-sm font-medium">{fa ? "آخرین تسویه‌ها" : "Recent payouts"}</p>
-                <ul className="mt-2 space-y-1 text-caption text-foreground-secondary">
-                  {payouts.recent.slice(0, 8).map((payout) => (
-                    <li key={payout.id} className="flex flex-wrap justify-between gap-1">
-                      <span dir="ltr">{payout.id}</span>
-                      <span>
-                        {formatPrice(payout.amount, locale)} · {payout.status}
-                        {payout.reference ? ` · ${payout.reference}` : ""}
-                      </span>
-                      {payout.note && <span className="w-full text-muted">{payout.note}</span>}
+                <ul className="mt-2 space-y-3 text-caption text-foreground-secondary">
+                  {payouts.recent.map((payout) => (
+                    <li key={payout.id} className="rounded-lg border border-border p-3">
+                      <div className="flex flex-wrap justify-between gap-2">
+                        <span dir="ltr">{payout.id}</span>
+                        <span>{formatPrice(payout.amount, locale)} · {payoutStatusLabel(payout, fa)}</span>
+                      </div>
+                      {payout.reference && <p className="mt-1" dir="ltr">{fa ? "مرجع انتقال:" : "Transfer reference:"} {payout.reference}</p>}
+                      {payout.note && <p className="mt-1 text-muted">{payout.note}</p>}
+                      {payout.paymentEvidence && <p className="mt-1 text-muted break-all">{fa ? "مدرک انتقال:" : "Transfer evidence:"} {payout.paymentEvidence}</p>}
+                      {hasManualTransferConfirmation(payout) ? (
+                        <p className="mt-1 text-muted">
+                          {fa ? "تأییدکننده:" : "Confirmed by:"} <span dir="ltr">{payout.manualTransferConfirmedBy}</span>
+                          {payout.manualTransferConfirmedAt
+                            ? ` · ${new Date(payout.manualTransferConfirmedAt).toLocaleString(fa ? "fa-IR" : "en-GB")}`
+                            : ""}
+                        </p>
+                      ) : payout.status === "paid" ? (
+                        <div className="mt-3 space-y-2 rounded-lg border border-warning/40 bg-background-secondary p-3">
+                          <p>
+                            {fa
+                              ? "این رکورد قدیمی مدرک تأیید دستی معتبر ندارد. تا وقتی انتقال بیرون از برنامه، مرجع و مدرک را اپراتور تأیید نکند، آن را انتقال تأییدشده در نظر نگیرید."
+                              : "This legacy paid record lacks a valid manual confirmation. Do not treat it as confirmed until an operator verifies the off-app transfer, reference, and evidence."}
+                          </p>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <input
+                              value={payoutReference[payout.id] ?? payout.reference ?? ""}
+                              onChange={(event) => setPayoutReference((current) => ({ ...current, [payout.id]: event.target.value }))}
+                              dir="ltr"
+                              placeholder={fa ? "مرجع انتقال بانکی" : "Bank transfer reference"}
+                              aria-label={fa ? "مرجع انتقال برای تطبیق" : "Transfer reference for reconciliation"}
+                              className="rounded-md border border-border bg-transparent px-3 py-2 text-caption"
+                            />
+                            <input
+                              value={payoutEvidence[payout.id] ?? payout.paymentEvidence ?? ""}
+                              onChange={(event) => setPayoutEvidence((current) => ({ ...current, [payout.id]: event.target.value }))}
+                              placeholder={fa ? "پیوند یا شناسه مدرک پرداخت" : "Payment evidence link or ID"}
+                              aria-label={fa ? "مدرک انتقال برای تطبیق" : "Transfer evidence for reconciliation"}
+                              className="rounded-md border border-border bg-transparent px-3 py-2 text-caption"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            disabled={busy !== null || !(payoutReference[payout.id]?.trim() || payout.reference) || !(payoutEvidence[payout.id]?.trim() || payout.paymentEvidence)}
+                            onClick={() => payoutAction("confirm_manual_transfer", payout.id)}
+                            className="rounded-full border border-border px-3 py-1.5 hover:border-foreground disabled:opacity-50"
+                          >
+                            {fa ? "تطبیق و تأیید انتقال دستی" : "Reconcile and confirm manual transfer"}
+                          </button>
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

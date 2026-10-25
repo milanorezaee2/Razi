@@ -86,7 +86,7 @@ export function LiveChatWidget() {
   }
 
   return (
-    <div className={`fixed bottom-5 z-[60] ${fa ? "left-5" : "right-5"}`} dir={fa ? "rtl" : "ltr"}>
+    <div className={`mobile-support fixed bottom-5 z-[60] ${fa ? "left-5" : "right-5"}`} dir={fa ? "rtl" : "ltr"}>
       {open && (
         <section className="mb-3 flex h-[min(560px,calc(100dvh-110px))] w-[min(370px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_18px_70px_rgba(18,24,40,.22)]" aria-label={fa ? "گفتگوی آنلاین" : "Live chat"}>
           <header className="flex items-center gap-3 bg-[#1e2230] px-4 py-4 text-white">

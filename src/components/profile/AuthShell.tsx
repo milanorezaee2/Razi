@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import { Logo } from "@/components/layout/Logo";
 
 export function AuthShell({ title, description, image, children }: { title: string; description: string; image: string; children: React.ReactNode }) {

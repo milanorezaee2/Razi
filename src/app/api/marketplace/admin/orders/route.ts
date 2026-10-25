@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 /**
  * POST /api/marketplace/admin/orders
  *
- * actions: fulfill | refund | set_status | deliver_again
+ * actions: fulfill | record_manual_refund | set_status | deliver_again
  * `fulfill` is the escape hatch for a payment that completed while the callback
  * could not reach us (server restart, timeout) — it re-runs the same idempotent
  * fulfilment used by the gateway callback.
@@ -39,10 +39,13 @@ export async function POST(request: Request) {
   if ("response" in auth) return auth.response;
 
   const body = await readJson<{
-    action?: "fulfill" | "refund" | "set_status" | "deliver_again";
+    action?: "fulfill" | "record_manual_refund" | "set_status" | "deliver_again";
     orderId?: string;
     status?: "pending_payment" | "paid" | "failed" | "canceled" | "refunded";
     note?: string;
+    refundReference?: string;
+    refundEvidence?: string;
+    manualRefundConfirmed?: boolean;
   }>(request);
 
   if (!body?.orderId || !body.action) return fail("invalid_payload");
@@ -53,13 +56,35 @@ export async function POST(request: Request) {
       if (!result.ok) return fail("not_payable", 409);
       return json({ ok: true, alreadyFulfilled: result.alreadyFulfilled, licenses: result.licenses, emails: result.emails });
     }
-    case "refund": {
-      const result = await adminOps.refundOrder(body.orderId, auth.user.email);
-      if (!result.ok) return fail("not_refundable", 409);
-      return json({ ok: true, revoked: result.licenses.length });
+    case "record_manual_refund": {
+      if (typeof body.refundReference !== "string" || typeof body.refundEvidence !== "string" || !body.refundReference.trim() || !body.refundEvidence.trim()) {
+        return fail("manual_refund_evidence_required", 422);
+      }
+      if (body.manualRefundConfirmed !== true) return fail("manual_refund_confirmation_required", 422);
+
+      const result = await adminOps.recordManualRefund(body.orderId, auth.user.email, {
+        reference: body.refundReference,
+        evidence: body.refundEvidence,
+        manualRefundConfirmed: true,
+      });
+      if (!result.ok) {
+        if (result.error === "not_found") return fail("not_found", 404);
+        if (result.error === "manual_refund_evidence_required" || result.error === "manual_refund_confirmation_required") {
+          return fail(result.error, 422);
+        }
+        return fail("order_not_eligible", 409);
+      }
+      return json({
+        ok: true,
+        status: "refunded",
+        refundMode: "manual",
+        manualRefundConfirmed: true,
+        revoked: result.licenses.length,
+      });
     }
     case "set_status": {
       if (!body.status) return fail("missing_status");
+      if (body.status === "refunded") return fail("use_record_manual_refund_action", 409);
       const order = await adminOps.setOrderStatus(body.orderId, body.status, body.note);
       if (!order) return fail("not_found", 404);
       return json({ ok: true, order: { id: order.id, status: order.status } });

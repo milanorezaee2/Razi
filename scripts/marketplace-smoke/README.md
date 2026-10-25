@@ -18,13 +18,13 @@ node scripts/marketplace-smoke/mkformats.mjs /tmp/fmt
 DATA=dist/.next/standalone/data node scripts/marketplace-smoke/seed-demo-works.mjs
 
 # 3. run the checks (BASE defaults to http://localhost:3000,
-#    DATA defaults to dist/.next/standalone/data)
+#    DATA defaults to dist/.next/standalone/data; for npm run dev from repo root, use DATA=data)
 bash scripts/marketplace-smoke/http-e2e.sh        # upload → review → buy → download → certificate
-bash scripts/marketplace-smoke/exclusive-e2e.sh   # exclusive sale delists, refund relists
+bash scripts/marketplace-smoke/manual-refund-e2e.sh # sandbox sale → manual off-app refund record
 bash scripts/marketplace-smoke/artist-e2e.sh      # artist studio: prices, sale, payout, coupon
 bash scripts/marketplace-smoke/sub-e2e.sh         # download pass, covered download, cancel
 bash scripts/marketplace-smoke/family-e2e.sh      # product families: shop grouping, sidebar tree, ?family=
-bash scripts/marketplace-smoke/formats-e2e.sh     # colourways + PNG/JPG/preview/AI/PSD/SVG/EPS delivery
+bash scripts/marketplace-smoke/formats-e2e.sh     # tier-price moderation + colourways and every deliverable format
 bash scripts/marketplace-smoke/artist-dashboard-e2e.sh   # the two signup doors + artist dashboard
 bash scripts/marketplace-smoke/pages.sh           # every storefront/admin page renders
 bash scripts/marketplace-smoke/portfolio-e2e.sh   # the founder's introduction on /portfolio
@@ -33,6 +33,10 @@ DATA=dist/.next/standalone/data \
 MARKETPLACE_MULTIPART_THRESHOLD_MB=5 \
 bash scripts/marketplace-smoke/multipart-e2e.sh   # 12 MB master uploaded in 8 MB chunks
 ```
+
+## Manual financial controls
+
+The current app has no live refund gateway or automatic bank-transfer provider. The admin order action `record_manual_refund` only records a refund **after the operator has processed it outside the app**, supplies a provider/bank reference and receipt evidence, and explicitly confirms the external transfer; it then updates internal order/ledger state and revokes licenses. This app never moves refund funds. A payout can be confirmed only after approval, with a transfer reference and receipt evidence plus the explicit `manualTransferConfirmed: true` operator attestation. The API records this as a manual off-app confirmation and writes its ledger debit only after those checks; the app does not move payout funds and does not report an automatic transfer. `artist-e2e.sh` and `manual-refund-e2e.sh` use clearly prefixed synthetic smoke evidence and operator confirmation and must never be treated as real payment receipts.
 
 Notes:
 
@@ -46,7 +50,8 @@ Notes:
   It deletes the asset it uploads, so it can be re-run without polluting the store.
 - `formats-e2e.sh` uploads one design in **two colourways with all seven formats** (`mkformats.mjs`
   builds the real files with `sharp`/`pdf-lib`), checks the refusal paths (`invalid_format`,
-  `unsupported_type`, `raster_required`, `invalid_signature`), publishes it, buys it once and downloads
+  `unsupported_type`, `raster_required`, `invalid_signature`), saves a moderator price correction while
+  the work remains in review, applies another override as part of approval, then buys it once and downloads
   all twelve deliverables — each must be byte-identical to what the artist uploaded.
 - `artist-dashboard-e2e.sh` is the registration rig: it asserts the two doors the site always had —
   `/signup` serves the registration form with the account-type choice inside it («خریدار» /

@@ -3,6 +3,11 @@ import { cookies } from "next/headers";
 import { getAdminSession } from "@/lib/auth";
 import { withNoStore } from "@/lib/http";
 import { getContentWithEtag, resetContent, saveContent } from "@/lib/data/store";
+import { seedContent } from "@/lib/data/seed";
+import { getAssets, getUploadSessions } from "@/lib/marketplace/assets";
+import { getProductFamilyReferenceCounts, hasProductFamilyReferences } from "@/lib/product-family-references";
+import { withProductFamilyLock } from "@/lib/product-family-lock";
+import { InvalidContentRelationsError, validateSiteContentRelations } from "@/lib/admin-content-validation";
 import { sanitizeDeep } from "@/lib/security/sanitize";
 import { verifyCsrf } from "@/lib/security/csrf";
 import { applySecurityHeaders } from "@/lib/security/headers";
@@ -69,7 +74,16 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = (await req.json().catch(() => null)) as SiteContent | null;
-  if (!body || !Array.isArray(body.patterns) || !Array.isArray(body.products)) {
+  const requiredCollections: (keyof SiteContent)[] = [
+    "productFamilies", "categories", "spaces", "artists", "patterns", "products", "portfolios",
+    "education", "stories", "collections", "homeSections", "banners", "seo", "announcementBars",
+  ];
+  if (
+    !body
+    || requiredCollections.some((key) => !Array.isArray(body[key]))
+    || (body.portfolioCategories !== undefined && !Array.isArray(body.portfolioCategories))
+    || !body.hero || typeof body.hero !== "object"
+  ) {
     return applySecurityHeaders(
       req,
       NextResponse.json({ ok: false, error: "invalid_payload" }, withNoStore({ status: 400 })),
@@ -78,6 +92,16 @@ export async function PUT(req: NextRequest) {
 
   // Defense-in-depth sanitization — strip scripts/event handlers/JS URLs from every string field.
   const safeBody = sanitizeDeep(body) as SiteContent;
+  const relationIssues = validateSiteContentRelations(safeBody);
+  if (relationIssues.length > 0) {
+    return applySecurityHeaders(
+      req,
+      NextResponse.json(
+        { ok: false, error: "invalid_relationships", issues: relationIssues },
+        withNoStore({ status: 422 }),
+      ),
+    );
+  }
 
   const match = expectedEtag(req);
   if (match === undefined) {
@@ -89,12 +113,54 @@ export async function PUT(req: NextRequest) {
 
   let savedEtag: string;
   try {
-    savedEtag = await saveContent(safeBody, match);
+    savedEtag = await withProductFamilyLock(async () => {
+      const [current, currentEtag] = await getContentWithEtag();
+      if (currentEtag !== match) throw new Error("etag_conflict");
+
+      const incomingFamilyIds = new Set(safeBody.productFamilies.map((family) => family.id));
+      const removedFamilies = current.productFamilies.filter((family) => !incomingFamilyIds.has(family.id));
+      if (removedFamilies.length) {
+        const [assets, uploads] = await Promise.all([getAssets(), getUploadSessions()]);
+        const references = getProductFamilyReferenceCounts(
+          safeBody,
+          assets,
+          uploads,
+          removedFamilies.map((family) => family.id),
+        );
+        const blocked = removedFamilies.find((family) => hasProductFamilyReferences(references[family.id]));
+        if (blocked) {
+          throw Object.assign(new Error("product_family_in_use"), {
+            familyId: blocked.id,
+            references: references[blocked.id],
+          });
+        }
+      }
+
+      return saveContent(safeBody, match);
+    });
   } catch (e) {
     if (e instanceof Error && e.message === "etag_conflict") {
       return applySecurityHeaders(
         req,
         NextResponse.json({ ok: false, error: "etag_conflict" }, withNoStore({ status: 409 })),
+      );
+    }
+    if (e instanceof Error && e.message === "product_family_in_use") {
+      const dependency = e as Error & {
+        familyId?: string;
+        references?: ReturnType<typeof getProductFamilyReferenceCounts>[string];
+      };
+      return applySecurityHeaders(
+        req,
+        NextResponse.json(
+          {
+            ok: false,
+            error: "product_family_in_use",
+            familyId: dependency.familyId,
+            references: dependency.references,
+          },
+          withNoStore({ status: 409 }),
+        ),
       );
     }
     console.error("[admin/content] storage write failed:", e);
@@ -127,12 +193,57 @@ export async function DELETE(req: NextRequest) {
 
   let resetEtag: string;
   try {
-    resetEtag = await resetContent(match);
+    resetEtag = await withProductFamilyLock(async () => {
+      const [current, currentEtag] = await getContentWithEtag();
+      if (currentEtag !== match) throw new Error("etag_conflict");
+
+      const resetFamilyIds = new Set(seedContent.productFamilies.map((family) => family.id));
+      const removedFamilies = current.productFamilies.filter((family) => !resetFamilyIds.has(family.id));
+      if (removedFamilies.length) {
+        const [assets, uploads] = await Promise.all([getAssets(), getUploadSessions()]);
+        const references = getProductFamilyReferenceCounts(
+          seedContent,
+          assets,
+          uploads,
+          removedFamilies.map((family) => family.id),
+        );
+        const blocked = removedFamilies.find((family) => {
+          const counts = references[family.id];
+          return Boolean(counts && hasProductFamilyReferences(counts));
+        });
+        if (blocked) {
+          throw Object.assign(new Error("product_family_in_use"), {
+            familyId: blocked.id,
+            references: references[blocked.id],
+          });
+        }
+      }
+      return resetContent(match);
+    });
   } catch (e) {
+    if (e instanceof Error && e.message === "product_family_in_use") {
+      const dependency = e as Error & {
+        familyId?: string;
+        references?: ReturnType<typeof getProductFamilyReferenceCounts>[string];
+      };
+      return applySecurityHeaders(
+        req,
+        NextResponse.json(
+          { ok: false, error: "product_family_in_use", familyId: dependency.familyId, references: dependency.references },
+          withNoStore({ status: 409 }),
+        ),
+      );
+    }
     if (e instanceof Error && e.message === "etag_conflict") {
       return applySecurityHeaders(
         req,
         NextResponse.json({ ok: false, error: "etag_conflict" }, withNoStore({ status: 409 })),
+      );
+    }
+    if (e instanceof InvalidContentRelationsError) {
+      return applySecurityHeaders(
+        req,
+        NextResponse.json({ ok: false, error: e.message, issues: e.issues }, withNoStore({ status: 422 })),
       );
     }
     console.error("[admin/content] storage reset failed:", e);

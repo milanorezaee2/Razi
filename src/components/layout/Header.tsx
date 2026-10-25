@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, LayoutDashboard, Menu, Moon, ReceiptText, ShoppingBag, Sun, Store, User, X } from "lucide-react";
+import { ChevronDown, LayoutDashboard, Menu, Moon, ReceiptText, Search, ShoppingBag, Sun, Store, User, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth, useCart, useLocale, useTheme } from "@/components/providers/AppProviders";
+import { useAuth, useCart, useLocale, useSearch, useTheme } from "@/components/providers/AppProviders";
 import { SignOutButton } from "@/components/profile/SignOutButton";
 import { cn, href, t } from "@/lib/utils";
 import { Logo } from "./Logo";
@@ -20,6 +20,7 @@ export function Header({ nav }: { nav: NavData }) {
   const { count, open: openCart } = useCart();
   const { theme, toggle } = useTheme();
   const { user } = useAuth();
+  const { open: openSearch } = useSearch();
   const fa = locale === "fa";
 
   const [scrolled, setScrolled] = useState(false);
@@ -99,7 +100,7 @@ export function Header({ nav }: { nav: NavData }) {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 z-[70] transition-[background-color,border-color,box-shadow,backdrop-filter,top] duration-300",
+          "site-header fixed inset-x-0 z-[70] transition-[background-color,border-color,box-shadow,backdrop-filter,top] duration-300",
           transparent ? "border-b border-transparent bg-transparent" : "glass border-b border-border/70 shadow-[0_1px_0_0_var(--border)]",
         )}
         style={{ top: "var(--announce-h, 0px)" }}
@@ -107,8 +108,8 @@ export function Header({ nav }: { nav: NavData }) {
       >
         <div
           className={cn(
-            "container-x flex items-center justify-between gap-6 transition-[height] duration-300",
-            scrolled ? "h-[var(--header-h-compact)]" : "h-[var(--header-h)]",
+            "site-header__inner container-x flex items-center justify-between gap-4 sm:gap-6 transition-[height] duration-300",
+            scrolled ? "h-14 sm:h-[var(--header-h-compact)]" : "h-16 sm:h-[var(--header-h)]",
           )}
         >
           {/* Brand */}
@@ -229,6 +230,15 @@ export function Header({ nav }: { nav: NavData }) {
                 <User className="h-[18px] w-[18px]" />
               </Link>
             )}
+
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-label={dict.nav.search}
+              className={cn("site-header__search flex h-10 w-10 items-center justify-center rounded-md transition-colors lg:hidden", transparent ? "text-white/90 hover:bg-white/10" : "text-foreground-secondary hover:bg-background-secondary hover:text-foreground")}
+            >
+              <Search className="h-[18px] w-[18px]" />
+            </button>
 
             <button type="button" onClick={openCart} aria-label={dict.nav.cart} className={cn("relative flex h-10 w-10 items-center justify-center rounded-md transition-colors", transparent ? "text-white hover:bg-white/10" : "text-foreground hover:bg-background-secondary")}>
               <ShoppingBag className="h-[18px] w-[18px]" />

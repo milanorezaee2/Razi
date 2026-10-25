@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireArtistOrAdmin as requireApprovedArtistOrAdmin } from "@/lib/marketplace/guard";
 import { getContent, mutateCollection } from "@/lib/data/store";
+import { assertSiteContentRelations, InvalidContentRelationsError } from "@/lib/admin-content-validation";
 import { withNoStore } from "@/lib/http";
 import crypto from "crypto";
 import type { DraftStatus, EducationItem, Portfolio } from "@/lib/types";
@@ -14,6 +15,9 @@ function withContentEtag(response: NextResponse, etag: string) {
 
 function mutationErrorResponse(error: unknown, operation: string) {
   const code = error instanceof Error ? error.message : "";
+  if (error instanceof InvalidContentRelationsError) {
+    return NextResponse.json({ ok: false, error: error.message, issues: error.issues }, withNoStore({ status: 422 }));
+  }
   if (code === "not_found") {
     return NextResponse.json({ ok: false, error: code }, withNoStore({ status: 404 }));
   }
@@ -136,7 +140,9 @@ export async function POST(req: Request) {
           publishedAt: now.toISOString(),
           draftStatus: (body.draftStatus as DraftStatus) ?? "draft",
         };
-        return { items: [...education, item], result: item };
+        const nextEducation = [...education, item];
+        assertSiteContentRelations({ ...content, education: nextEducation });
+        return { items: nextEducation, result: item };
       });
       return withContentEtag(NextResponse.json({ ok: true, item }, withNoStore()), etag);
     } catch (error) {
@@ -175,7 +181,9 @@ export async function POST(req: Request) {
         size: (body.size as Portfolio["size"]) ?? "square",
         draftStatus: session.role === "admin" ? (body.draftStatus as DraftStatus) ?? "draft" : "draft",
       };
-      return { items: [...portfolios, portfolio], result: portfolio };
+      const nextPortfolios = [...portfolios, portfolio];
+      assertSiteContentRelations({ ...content, portfolios: nextPortfolios });
+      return { items: nextPortfolios, result: portfolio };
     });
     return withContentEtag(NextResponse.json({ ok: true, portfolio }, withNoStore()), etag);
   } catch (error) {
@@ -206,7 +214,7 @@ export async function PATCH(req: Request) {
 
   if (type === "education") {
     try {
-      const { result: item, etag } = await mutateCollection("education", (education) => {
+      const { result: item, etag } = await mutateCollection("education", (education, content) => {
         const index = education.findIndex((candidate) => candidate.id === body.id);
         if (index < 0) throw new Error("not_found");
         const existing = education[index];
@@ -233,6 +241,7 @@ export async function PATCH(req: Request) {
         } as EducationItem;
         const nextEducation = [...education];
         nextEducation[index] = updated;
+        assertSiteContentRelations({ ...content, education: nextEducation });
         return { items: nextEducation, result: updated };
       });
       return withContentEtag(NextResponse.json({ ok: true, item }, withNoStore()), etag);
@@ -243,7 +252,7 @@ export async function PATCH(req: Request) {
 
   // portfolio
   try {
-    const { result: portfolio, etag } = await mutateCollection("portfolios", (portfolios) => {
+    const { result: portfolio, etag } = await mutateCollection("portfolios", (portfolios, content) => {
       const index = portfolios.findIndex((candidate) => candidate.id === body.id);
       if (index < 0) throw new Error("not_found");
       const existing = portfolios[index];
@@ -271,6 +280,7 @@ export async function PATCH(req: Request) {
       } as Portfolio;
       const nextPortfolios = [...portfolios];
       nextPortfolios[index] = updated;
+      assertSiteContentRelations({ ...content, portfolios: nextPortfolios });
       return { items: nextPortfolios, result: updated };
     });
     return withContentEtag(NextResponse.json({ ok: true, portfolio }, withNoStore()), etag);
@@ -294,7 +304,7 @@ export async function DELETE(req: Request) {
 
   if (type === "education") {
     try {
-      const { etag } = await mutateCollection("education", (education) => {
+      const { etag } = await mutateCollection("education", (education, content) => {
         const item = education.find((candidate) => candidate.id === id);
         if (!item) throw new Error("not_found");
         if (session.role !== "admin" && item.authorId !== session.artistId) throw new Error("forbidden");
@@ -302,7 +312,9 @@ export async function DELETE(req: Request) {
         if (session.role !== "admin" && item.draftStatus === "published") {
           throw new Error("cannot_delete_published");
         }
-        return { items: education.filter((candidate) => candidate.id !== id), result: undefined };
+        const nextEducation = education.filter((candidate) => candidate.id !== id);
+        assertSiteContentRelations({ ...content, education: nextEducation });
+        return { items: nextEducation, result: undefined };
       });
       return withContentEtag(NextResponse.json({ ok: true }, withNoStore()), etag);
     } catch (error) {
@@ -311,14 +323,16 @@ export async function DELETE(req: Request) {
   }
 
   try {
-    const { etag } = await mutateCollection("portfolios", (portfolios) => {
+    const { etag } = await mutateCollection("portfolios", (portfolios, content) => {
       const item = portfolios.find((candidate) => candidate.id === id);
       if (!item) throw new Error("not_found");
       if (session.role !== "admin" && item.artistId !== session.artistId) throw new Error("forbidden");
       if (session.role !== "admin" && item.draftStatus === "published") {
         throw new Error("cannot_delete_published");
       }
-      return { items: portfolios.filter((candidate) => candidate.id !== id), result: undefined };
+      const nextPortfolios = portfolios.filter((candidate) => candidate.id !== id);
+      assertSiteContentRelations({ ...content, portfolios: nextPortfolios });
+      return { items: nextPortfolios, result: undefined };
     });
     return withContentEtag(NextResponse.json({ ok: true }, withNoStore()), etag);
   } catch (error) {

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { Eye } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -70,7 +70,7 @@ export function ProductCard({ product, variant = "default", className, priority 
 
   return (
     <>
-      <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("group relative flex flex-col rounded-lg", className)}>
+      <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("product-card group relative flex min-w-0 flex-col rounded-lg", className)}>
         <Link href={url} className="relative block overflow-hidden rounded-lg bg-background-secondary" aria-label={t(product.title, locale)}>
           <div className={cn("relative w-full", variant === "large" ? "aspect-[4/5]" : variant === "compact" ? "aspect-[2/1]" : "aspect-square")}>
             <Image
@@ -79,7 +79,7 @@ export function ProductCard({ product, variant = "default", className, priority 
               alt={`${t(product.title, locale)} — ${t(color.name, locale)}`}
               fill
               priority={priority}
-              sizes={variant === "large" ? "(max-width:768px) 100vw, 50vw" : "(max-width:640px) 50vw, (max-width:1024px) 33vw, 25vw"}
+              sizes={variant === "large" ? "(max-width:768px) 150vw, 50vw" : "(max-width:640px) 90vw, (max-width:1024px) 33vw, 25vw"}
               className="img-zoom object-cover anim-scale-fade"
             />
           </div>
@@ -91,34 +91,34 @@ export function ProductCard({ product, variant = "default", className, priority 
             </div>
             <FavoriteButton id={product.id} size="sm" />
           </div>
-          <div className="pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-3 items-center justify-between gap-2 opacity-0 transition-[opacity,transform] duration-300 ease-[var(--ease-out)] group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-            <button type="button" onClick={(e) => { e.preventDefault(); setQuick(true); }} className="inline-flex h-9 items-center gap-1.5 rounded-full glass px-3 text-[13px] font-medium text-foreground hover:bg-surface">
+          <div className="product-card__actions pointer-events-none absolute inset-x-3 bottom-3 flex translate-y-3 items-center justify-between gap-2 opacity-0 transition-[opacity,transform] duration-300 ease-[var(--ease-out)] group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
+            <button type="button" onClick={(e) => { e.preventDefault(); setQuick(true); }} className="product-card__quick inline-flex h-9 items-center gap-1.5 rounded-full glass px-3 text-[13px] font-medium text-foreground hover:bg-surface">
               <Eye className="h-3.5 w-3.5" />
               {dict.common.quickView}
             </button>
-            <AddToCartButton variant="icon" disabled={out} line={{ kind: "product", id: product.id, sku: product.sku, title: t(product.title, locale), image: color.image, price: product.price, colorName: t(color.name, locale), colorHex: color.hex, href: url }} />
+            <AddToCartButton className="product-card__add" variant="icon" disabled={out} line={{ kind: "product", id: product.id, sku: product.sku, title: t(product.title, locale), image: color.image, price: product.price, colorName: t(color.name, locale), colorHex: color.hex, href: url }} />
           </div>
         </Link>
 
-        <div className="flex flex-col gap-2 px-3 pt-3 pb-3">
+        <div className="product-card__info flex min-w-0 flex-col gap-2 px-3 pt-3 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <Link href={url} className={cn("block truncate font-medium text-foreground transition-colors hover:text-accent", variant === "large" ? "text-h4" : "text-[15px]")}>{t(product.title, locale)}</Link>
-              <p className="mt-0.5 truncate text-caption text-foreground-secondary">
+              <Link href={url} className={cn("product-card__title block truncate font-medium text-foreground transition-colors hover:text-accent", variant === "large" ? "text-h4" : "text-[15px]")}>{t(product.title, locale)}</Link>
+              <p className="product-card__subtitle mt-0.5 truncate text-caption text-foreground-secondary">
                 {product.artist ? t(product.artist.name, locale) : dict.brand}
                 {product.category && <span className="text-muted"> · {t(product.category.name, locale)}</span>}
               </p>
             </div>
             <div className="shrink-0 text-end">
-              <span className="block text-sm font-semibold tabular text-foreground">{formatPrice(product.price, locale)}</span>
+              <span className="product-card__price block text-sm font-semibold tabular text-foreground">{formatPrice(product.price, locale)}</span>
               {product.compareAt && <span className="block text-caption tabular text-muted line-through">{formatPrice(product.compareAt, locale)}</span>}
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="product-card__metadata flex items-center justify-between gap-2">
             <Sku value={product.sku} />
             <span className={cn("text-caption", out ? "text-error" : color.stock <= 4 ? "text-warning" : "text-muted")}>{out ? dict.common.outOfStock : color.stock <= 4 ? dict.common.lowStock : dict.common.inStock}</span>
           </div>
-          <dl className="grid grid-cols-3 gap-x-2 border-t border-border pt-2.5">
+          <dl className="product-card__specs grid grid-cols-3 gap-x-2 border-t border-border pt-2.5">
             {product.specs.slice(0, 3).map((s) => (
               <div key={t(s.label, "en")} className="min-w-0">
                 <dt className="truncate text-[10px] uppercase tracking-wider text-muted">{t(s.label, locale)}</dt>
@@ -126,7 +126,7 @@ export function ProductCard({ product, variant = "default", className, priority 
               </div>
             ))}
           </dl>
-          <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="product-card__colors flex items-center justify-between gap-2 pt-0.5">
             {hasVariants && <ColorSwatches options={swatches} value={colorId} onChange={setColorId} size="sm" label={dict.common.color} />}
             <span className="truncate text-caption text-foreground-secondary">{t(color.name, locale)}</span>
           </div>

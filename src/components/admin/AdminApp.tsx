@@ -17,7 +17,9 @@ import {
   GalleryHorizontalEnd,
   Home,
   Image,
+  Inbox,
   LayoutDashboard,
+  Layers,
   LogOut,
   Megaphone,
   MessageCircle,
@@ -44,6 +46,7 @@ import { AdminPushControl } from "@/components/admin/AdminPushControl";
 import { HomeSectionsManager } from "@/components/admin/HomeSectionsManager";
 import { PatternsManager } from "@/components/admin/PatternsManager";
 import { ProductsManager } from "@/components/admin/ProductsManager";
+import { ProductFamiliesManager } from "@/components/admin/ProductFamiliesManager";
 import { CollectionsManager } from "@/components/admin/CollectionsManager";
 import { BuyersManager } from "@/components/admin/BuyersManager";
 import { UsersManager } from "@/components/admin/UsersManager";
@@ -54,6 +57,7 @@ import { AcademyManager } from "@/components/admin/AcademyManager";
 import { ReservationsManager } from "@/components/admin/ReservationsManager";
 import { FinancialManager } from "@/components/admin/FinancialManager";
 import { ChatsManager } from "@/components/admin/ChatsManager";
+import { LeadsManager } from "@/components/admin/LeadsManager";
 import { MediaUploadControl } from "@/components/admin/MediaUploadControl";
 import { useAuth, useLocale } from "@/components/providers/AppProviders";
 import { Button } from "@/components/ui/Button";
@@ -68,6 +72,9 @@ import { ADMIN_LOGIN_DISABLED } from "@/lib/admin-access";
 import { withCsrf } from "@/lib/security/csrf-client";
 import { cn, href, slugify, t } from "@/lib/utils";
 import type { AnnouncementBarConfig, AnnouncementBarDirection, AnnouncementBarKind, AnnouncementBarMotion, AnnouncementBarTransition, Banner, Category, EducationItem, HeroContent, HomeSectionKey, PortfolioHeroSettings, SeoMeta, SiteContent } from "@/lib/types";
+import { formatInvalidContentWriteMessage } from "@/lib/admin-content-issues";
+import type { ContentRelationIssueSummary } from "@/lib/admin-content-issues";
+import type { ProductFamilyReferenceCounts } from "@/lib/product-family-references";
 import type { AdminContentMutation } from "@/lib/admin-content-mutation";
 import { PortfolioHeroManager } from "@/components/admin/PortfolioHeroManager";
 import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
@@ -80,6 +87,7 @@ type Section =
   | "buyers"
   | "users"
   | "chats"
+  | "leads"
   | "reservations"
   | "artists-signup"
   | "home"
@@ -89,6 +97,7 @@ type Section =
   | "collections"
   | "patterns"
   | "products"
+  | "product-families"
   | "artists"
   | "portfolios"
   | "education"
@@ -133,6 +142,35 @@ class ContentConflictError extends Error {
   }
 }
 
+class ContentRelationsError extends Error {
+  constructor(public readonly issues: ContentRelationIssueSummary[]) {
+    super("invalid_relationships");
+    this.name = "ContentRelationsError";
+  }
+}
+
+class ProductFamilyInUseError extends Error {
+  constructor(
+    public readonly familyId: string,
+    public readonly references: ProductFamilyReferenceCounts,
+  ) {
+    super("product_family_in_use");
+    this.name = "ProductFamilyInUseError";
+  }
+}
+
+function productFamilyDependencyMessage(error: ProductFamilyInUseError, data: SiteContent | null): string {
+  const name = data?.productFamilies.find((family) => family.id === error.familyId)?.name.fa ?? error.familyId;
+  const refs = error.references;
+  const details = [
+    refs.products ? `${refs.products.toLocaleString("fa-IR")} محصول` : "",
+    refs.artistSignups ? `${refs.artistSignups.toLocaleString("fa-IR")} ثبت‌نام طراح` : "",
+    refs.marketplaceAssets ? `${refs.marketplaceAssets.toLocaleString("fa-IR")} اثر مارکت‌پلیس` : "",
+    refs.openUploads ? `${refs.openUploads.toLocaleString("fa-IR")} آپلود باز` : "",
+  ].filter(Boolean).join("، ");
+  return `حذف «${name}» انجام نشد؛ این خانواده هنوز در ${details || "محتوای دیگری"} استفاده می‌شود. وابستگی‌ها را به خانواده‌ای دیگر منتقل کنید و دوباره ذخیره کنید.`;
+}
+
 interface AdminContentResponse<T> {
   data: T;
   etag: string | null;
@@ -141,8 +179,19 @@ interface AdminContentResponse<T> {
 async function adminFetch<T>(init?: RequestInit): Promise<AdminContentResponse<T>> {
   const r = await fetch("/api/admin/content", { ...SESSION_FETCH, ...withCsrf(init ?? {}) });
   if (r.status === 401) throw new UnauthorizedError();
-  const payload = await r.json().catch(() => null) as (T & { error?: string }) | null;
+  const payload = await r.json().catch(() => null) as (T & {
+    error?: string;
+    issues?: ContentRelationIssueSummary[];
+    familyId?: string;
+    references?: ProductFamilyReferenceCounts;
+  }) | null;
   if (r.status === 409 && payload?.error === "etag_conflict") throw new ContentConflictError();
+  if (r.status === 409 && payload?.error === "product_family_in_use" && payload.familyId && payload.references) {
+    throw new ProductFamilyInUseError(payload.familyId, payload.references);
+  }
+  if (r.status === 422 && payload?.error === "invalid_relationships") {
+    throw new ContentRelationsError(payload.issues ?? []);
+  }
   if (!r.ok) throw new Error(`admin/content → ${r.status}`);
   const rawEtag = r.headers.get("ETag");
   return {
@@ -174,6 +223,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "buyers", label: "خریداران", icon: <ShoppingBag className="h-4 w-4" /> },
       { id: "users", label: "مدیریت کاربران", icon: <Users className="h-4 w-4" /> },
       { id: "chats", label: "گفتگوهای آنلاین", icon: <MessageCircle className="h-4 w-4" /> },
+      { id: "leads", label: "درخواست‌ها و خبرنامه", icon: <Inbox className="h-4 w-4" /> },
       { id: "reservations", label: "رزرو رویدادها", icon: <CalendarClock className="h-4 w-4" /> },
       { id: "artists-signup", label: "طراحان", icon: <Palette className="h-4 w-4" /> },
     ],
@@ -200,6 +250,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "collections", label: "مجموعه‌ها", icon: <GalleryHorizontalEnd className="h-4 w-4" /> },
       { id: "patterns", label: "پترن‌ها", icon: <Palette className="h-4 w-4" /> },
       { id: "products", label: "محصولات", icon: <ShoppingBag className="h-4 w-4" /> },
+      { id: "product-families", label: "خانواده‌های محصول", icon: <Layers className="h-4 w-4" /> },
     ],
   },
   {
@@ -231,7 +282,8 @@ export function AdminApp() {
   const [contentEtag, setContentEtag] = useState<string | null>(null);
   const [section, setSection] = useState<Section>("dashboard");
   const [status, setStatus] = useState<"idle" | "saving" | "ok" | "error">("idle");
-  const [saveError, setSaveError] = useState<"conflict" | "error" | null>(null);
+  const [saveError, setSaveError] = useState<"conflict" | "error" | "relationships" | null>(null);
+  const [relationErrorMessage, setRelationErrorMessage] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [loadError, setLoadError] = useState<"unauthorized" | "error" | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -345,6 +397,7 @@ export function AdminApp() {
     const savedSnapshot = data;
     setStatus("saving");
     setSaveError(null);
+    setRelationErrorMessage(null);
     try {
       const response = await adminFetch<{ ok: true }>({
         method: "PUT",
@@ -369,6 +422,14 @@ export function AdminApp() {
         // Keep the local draft intact; the operator can review the latest server version before retrying.
         setStatus("error");
         setSaveError("conflict");
+      } else if (e instanceof ProductFamilyInUseError) {
+        setStatus("error");
+        setSaveError("relationships");
+        setRelationErrorMessage(productFamilyDependencyMessage(e, dataRef.current));
+      } else if (e instanceof ContentRelationsError) {
+        setStatus("error");
+        setSaveError("relationships");
+        setRelationErrorMessage(formatInvalidContentWriteMessage(e.issues));
       } else {
         setStatus("error");
         setSaveError("error");
@@ -385,6 +446,8 @@ export function AdminApp() {
       setSaveError("error");
       return;
     }
+    setSaveError(null);
+    setRelationErrorMessage(null);
     try {
       await adminFetch<{ ok: true }>({
         method: "DELETE",
@@ -398,6 +461,7 @@ export function AdminApp() {
       setDirty(false);
       setLoadError(null);
       setSaveError(null);
+      setRelationErrorMessage(null);
       setStatus("idle");
       router.refresh();
     } catch (e) {
@@ -405,6 +469,14 @@ export function AdminApp() {
       else if (e instanceof ContentConflictError) {
         setStatus("error");
         setSaveError("conflict");
+      } else if (e instanceof ProductFamilyInUseError) {
+        setStatus("error");
+        setSaveError("relationships");
+        setRelationErrorMessage(productFamilyDependencyMessage(e, dataRef.current));
+      } else if (e instanceof ContentRelationsError) {
+        setStatus("error");
+        setSaveError("relationships");
+        setRelationErrorMessage(formatInvalidContentWriteMessage(e.issues));
       } else {
         setStatus("error");
         setSaveError("error");
@@ -560,7 +632,9 @@ export function AdminApp() {
             )}
             {status === "error" && (
               <span className="rounded-full bg-error/10 px-3 py-1 text-xs font-medium text-error">
-                {saveError === "conflict" ? "تغییر هم‌زمان؛ بازبینی لازم است" : "خطا در ذخیره"}
+                {saveError === "conflict"
+                  ? "تغییر هم‌زمان؛ بازبینی لازم است"
+                  : saveError === "relationships" ? "ارجاع محتوا نیاز به اصلاح دارد" : "خطا در ذخیره"}
               </span>
             )}
             {dirty && status === "idle" && (
@@ -611,12 +685,16 @@ export function AdminApp() {
             <div role="alert" className="mb-5 flex flex-col gap-3 rounded-xl border border-error/30 bg-error/5 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-foreground">
                 <p className="font-semibold">
-                  {saveError === "conflict" ? "نسخهٔ محتوای سایت هم‌زمان تغییر کرده است." : "وضعیت ذخیره‌سازی تأیید نشد."}
+                  {saveError === "conflict"
+                    ? "نسخهٔ محتوای سایت هم‌زمان تغییر کرده است."
+                    : saveError === "relationships" ? "ارجاع‌های بین محتواها معتبر نیستند." : "وضعیت ذخیره‌سازی تأیید نشد."}
                 </p>
                 <p className="mt-1 text-xs text-foreground-secondary">
                   {saveError === "conflict"
                     ? "پیش‌نویس فعلی شما حفظ شده و بازنویسی نشده است. بارگذاری نسخهٔ سرور، تغییرات محلی ذخیره‌نشده را جایگزین می‌کند."
-                    : "برای اطمینان از وضعیت سرور، نسخهٔ فعلی را بارگذاری کنید؛ این کار پیش‌نویس محلی را جایگزین می‌کند."}
+                    : saveError === "relationships"
+                      ? relationErrorMessage
+                      : "برای اطمینان از وضعیت سرور، نسخهٔ فعلی را بارگذاری کنید؛ این کار پیش‌نویس محلی را جایگزین می‌کند."}
                 </p>
               </div>
               <button
@@ -675,6 +753,7 @@ export function AdminApp() {
               {section === "buyers" && <BuyersManager />}
               {section === "users" && <UsersManager onContentMutation={applyContentMutation} />}
               {section === "chats" && <ChatsManager />}
+              {section === "leads" && <LeadsManager />}
               {section === "reservations" && <ReservationsManager />}
               {section === "artists-signup" && <ArtistsSignupManager onContentMutation={applyContentMutation} />}
               {section === "home" && <HomeSectionsManager data={data} update={update} />}
@@ -698,6 +777,9 @@ export function AdminApp() {
               )}
               {section === "products" && (
                 <ProductsManager data={data} update={update} />
+              )}
+              {section === "product-families" && (
+                <ProductFamiliesManager data={data} update={update} />
               )}
               {section === "artists" && (
                 <ArtistsManager data={data} update={update} onContentMutation={applyContentMutation} locale={locale} />

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth";
 import { getContentWithEtag, mutateContent } from "@/lib/data/store";
 import { getAllUsers, findUserById, toPublicUser, updateUser, saveAllUsers, createUser, upgradeUserToArtist } from "@/lib/data/users";
+import { assertNoNewContentRelationIssues, InvalidContentRelationsError } from "@/lib/admin-content-validation";
 import { withNoStore } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
@@ -101,12 +102,17 @@ export async function DELETE(req: Request) {
           || (item.id === target.artistId && (!item.userId || item.userId === target.id)))
         .map((item) => item.id);
       const removed = new Set(linkedArtistIds);
-      return {
-        content: { ...content, artists: content.artists.filter((item) => !removed.has(item.id)) },
-        result: linkedArtistIds,
-      };
+      const nextContent = { ...content, artists: content.artists.filter((item) => !removed.has(item.id)) };
+      assertNoNewContentRelationIssues(content, nextContent);
+      return { content: nextContent, result: linkedArtistIds };
     });
   } catch (error) {
+    if (error instanceof InvalidContentRelationsError) {
+      return NextResponse.json(
+        { ok: false, error: error.message, issues: error.issues },
+        withNoStore({ status: 422 }),
+      );
+    }
     console.error("[admin/users] linked artist removal failed:", error);
     return NextResponse.json({ ok: false, error: "content_update_failed" }, withNoStore({ status: 502 }));
   }

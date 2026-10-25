@@ -1,10 +1,12 @@
 import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
+import { assertSiteContentRelations } from "@/lib/admin-content-validation";
 import crypto from "crypto";
 import { seedContent } from "./seed";
 import type { CollectionKey, SiteContent } from "../types";
 import { rewriteLegacyMediaUrls } from "@/lib/media-storage";
+import { backfillLegacyPatternStatuses } from "../pattern-status";
 import { RAZIEH_TEXTILE_CATEGORY, RAZIEH_TEXTILE_PORTFOLIO } from "./razieh-textile-portfolio";
 
 /**
@@ -284,7 +286,19 @@ function migrateRaziehTextilePortfolio(content: SiteContent): SiteContent {
 }
 
 function prepareContent(content: SiteContent): SiteContent {
-  return rewriteLegacyMediaUrls(migrateRaziehTextilePortfolio(normalizeEventHosts(content)));
+  const migrated = migrateRaziehTextilePortfolio(normalizeEventHosts(content));
+  const normalized = {
+    ...migrated,
+    // Older persisted documents predate managed taxonomy; retain the seeded
+    // categories only when the collection is absent/malformed, not when empty.
+    productFamilies: Array.isArray(migrated.productFamilies)
+      ? migrated.productFamilies
+      : seedContent.productFamilies,
+  };
+  return rewriteLegacyMediaUrls({
+    ...normalized,
+    patterns: backfillLegacyPatternStatuses(normalized.patterns ?? []),
+  });
 }
 
 function isEnvelope(v: unknown): v is Envelope {
@@ -463,6 +477,10 @@ export async function updateHero(hero: SiteContent["hero"]): Promise<string> {
 }
 
 export async function resetContent(expectedEtag?: string): Promise<string> {
+  // A reset is still a content write: validate the prepared seed before
+  // removing the persisted document so it can never restore broken references.
+  assertSiteContentRelations(prepareContent(seedContent));
+
   if (storeBackendName() === "file") {
     await withFileContentLock(async () => {
       const raw = await file.read();

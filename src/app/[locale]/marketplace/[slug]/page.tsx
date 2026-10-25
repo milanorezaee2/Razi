@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AssetDetail, type AssetDetailData } from "@/components/marketplace/AssetDetail";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { DEFAULT_PRODUCT_FAMILIES } from "@/lib/data/families";
 import { artistCanPublishAsset, getAssets, getAssetBySlug } from "@/lib/marketplace/assets";
 import { assetColourways, assetDeliverables } from "@/lib/marketplace/colourways";
 import { DELIVERABLE_FORMATS, isDeliverableFormatId } from "@/lib/marketplace/formats";
@@ -121,6 +122,7 @@ export default async function MarketplaceAssetPage({ params }: { params: Promise
         locale={locale}
         asset={data}
         artistName={artist?.name ?? null}
+        productFamilies={content?.productFamilies ?? DEFAULT_PRODUCT_FAMILIES}
         couponHint={
           siblingCount > 0
             ? fa

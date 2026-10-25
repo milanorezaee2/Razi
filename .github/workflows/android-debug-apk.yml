@@ -1,0 +1,80 @@
+name: Rosie Admin Android APK
+
+on:
+  push:
+    branches:
+      - arena/18302fe2-razi
+  workflow_dispatch:
+    inputs:
+      site_url:
+        description: "Production HTTPS origin used by the Rosie Admin APK"
+        required: false
+        default: "https://shiny-melomakarona-ee3003.netlify.app"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android API 35 build tools
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build installable debug APK
+        shell: bash
+        run: |
+          set -o pipefail
+          set +e
+          npm run android:apk:debug 2>&1 | tee android-build.log
+          build_status=$?
+          set -e
+          if [ "$build_status" -ne 0 ]; then
+            details="$(tail -n 30 android-build.log | tr '\n' ' ' | cut -c1-3000)"
+            details="${details//'%'/'%25'}"
+            details="${details//$'\r'/'%0D'}"
+            details="${details//$'\n'/'%0A'}"
+            echo "::error title=Android APK build failed::$details"
+            exit "$build_status"
+          fi
+        env:
+          CAPACITOR_SERVER_URL: ${{ inputs.site_url || 'https://shiny-melomakarona-ee3003.netlify.app' }}
+
+      - name: Upload Android build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-debug-build-log
+          path: android-build.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Publish APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rosie-admin-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

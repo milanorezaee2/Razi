@@ -21,6 +21,12 @@
 
 # production
 /build
+/android/.gradle/
+/android/local.properties
+/android/**/build/
+/android/captures/
+/android/.idea/
+/android/*.iml
 
 # misc
 .DS_Store

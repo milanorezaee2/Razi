@@ -1,6 +1,6 @@
 import { siteStatistics } from "@/lib/data/statistics";
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import { PageHero } from "@/components/ui/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { getSite } from "@/lib/data/queries";

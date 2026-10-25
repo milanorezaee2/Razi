@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/ui/SiteImage";
 import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { LangToggle } from "@/components/portfolio/LangToggle";
@@ -28,7 +28,7 @@ export function PfHero() {
           alt="Razieh Kheiripour"
           fill
           priority
-          quality={95}
+          quality={100}
           sizes="100vw"
           className="object-cover object-center animate-pf-slow-zoom"
         />
