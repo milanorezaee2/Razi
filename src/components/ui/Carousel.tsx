@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /** Horizontal scroll rail with snap + RTL-aware arrow controls. */
-export function Carousel({ children, className, itemClassName = "w-[62vw] xs:w-[48vw] sm:w-[38vw] md:w-[30vw] lg:w-[24vw] xl:w-[300px]" }: { children: React.ReactNode[]; className?: string; itemClassName?: string }) {
+export function Carousel({ children, className, itemClassName = "w-[46vw] xs:w-[42vw] sm:w-[34vw] md:w-[30vw] lg:w-[24vw] xl:w-[300px]" }: { children: React.ReactNode[]; className?: string; itemClassName?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [canPrev, setPrev] = useState(false);
   const [canNext, setNext] = useState(true);

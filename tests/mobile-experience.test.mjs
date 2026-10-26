@@ -34,7 +34,7 @@ test("public mobile experience has app navigation, adaptive hero, and touch-frie
   // and the stage supports RTL-aware touch swipe between frames.
   assert.match(gallery, /\(max-width:767px\) 100vw/);
   assert.match(gallery, /onTouchEnd/);
-  assert.match(shopHero, /min-h-\[260px\]/);
+  assert.match(shopHero, /aspect-\[16\/11\]/);
   assert.match(shopHero, /shop-hero__stats/);
   assert.match(styles, /clamp\(31rem, 68svh, 38rem\)/);
   assert.match(styles, /pattern-card__media--large/);

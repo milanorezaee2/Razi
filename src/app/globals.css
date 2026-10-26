@@ -2412,7 +2412,7 @@ html[lang="fa"] .pf-hero-title span {
   }
 
   .site-footer__brand-card {
-    min-height: 17rem;
+    min-height: 0;
   }
 
   .site-footer__social-area {
@@ -2444,6 +2444,12 @@ html[lang="fa"] .pf-hero-title span {
   .site-footer__control {
     transition: none;
   }
+}
+
+/* Home flow: wrappers are display:contents on desktop (identical layout);
+   on phones the flow becomes a curated app-like column. */
+.home-flow__item {
+  display: contents;
 }
 
 /* ========================================================================
@@ -2875,8 +2881,65 @@ html[lang="fa"] .pf-hero-title span {
     white-space: nowrap;
   }
 
-  .pattern-card__media--large {
+  /* Mobile-native card media: square thumbs in grids & rails (app-style),
+     a cinematic 4/3 for the lead feature, 16/10 kept for wide features. */
+  .pattern-card__media {
     aspect-ratio: 1 / 1 !important;
+  }
+
+  .pattern-card__media--large {
+    aspect-ratio: 4 / 3 !important;
+  }
+
+  .pattern-card__media--wide {
+    aspect-ratio: 16 / 10 !important;
+  }
+
+  /* Narrow rail cards: colourway dots never spill past the card edge */
+  .pattern-card__colorways {
+    overflow: hidden;
+  }
+
+  .pattern-card__colorways > div {
+    min-width: 0;
+  }
+
+  /* Section headers — tighter, calmer type on phones */
+  .public-app-shell .section-header {
+    gap: 1rem;
+  }
+
+  .section-header__desc {
+    margin-top: 0.6rem;
+    font-size: 0.92rem;
+    line-height: 1.85;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+
+  /* Artist cards — compact profile banners on phones (no long bios) */
+  .artist-card__cover {
+    aspect-ratio: 2 / 1;
+  }
+
+  .artist-card__avatar {
+    height: 3.25rem;
+    width: 3.25rem;
+    border-width: 2px;
+  }
+
+  .artist-card__body {
+    padding: 1rem 1.1rem 1.15rem;
+  }
+
+  .artist-card__bio {
+    display: none;
+  }
+
+  .artist-card__profession {
+    min-height: 0;
   }
 
   /* Detail gallery: the stage owns the full content width on phones
@@ -3018,6 +3081,27 @@ html[lang="fa"] .pf-hero-title span {
   .public-app-shell .pattern-card > a,
   .public-app-shell .product-card > a {
     border-radius: 0.9rem;
+  }
+
+  /* Curated mobile home flow: wayfinding (categories) right after the hero,
+     everything else keeps the editor's relative order. */
+  .home-flow {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home-flow__item {
+    display: block;
+    order: 2;
+    min-width: 0;
+  }
+
+  .home-flow__item[data-home-section="hero"] {
+    order: 0;
+  }
+
+  .home-flow__item[data-home-section="categories"] {
+    order: 1;
   }
 }
 

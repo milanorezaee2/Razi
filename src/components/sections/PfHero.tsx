@@ -39,7 +39,7 @@ export function PfHero() {
       </div>
 
       {/* top navigation bar */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-5 md:px-10">
+      <nav className="relative z-10 flex items-center justify-between px-6 pb-5 pt-[calc(var(--announce-h,0px)+4.75rem)] md:px-10 md:pt-5">
         {/* monogram */}
         <span className="font-display text-xl font-semibold tracking-[0.18em] text-pf-gold">R.K</span>
 
@@ -108,7 +108,7 @@ export function PfHero() {
       </div>
 
       {/* bottom bar */}
-      <div className="relative z-10 flex items-center justify-between px-6 py-5 md:px-10">
+      <div className="relative z-10 flex items-center justify-between px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom))] pt-5 md:px-10 md:py-5">
         {/* category tags */}
         <div className="flex flex-wrap gap-2">
           {(["tagPattern", "tagWallpaper", "tagTextile", "tagDrapery"] as const).map((k) => (

@@ -43,7 +43,7 @@ export function PatternCard({ pattern, variant = "default", priority, className 
     <>
       <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("pattern-card group relative flex min-w-0 flex-col rounded-lg", className)}>
         <Link href={url} className="relative block overflow-hidden rounded-lg bg-background-secondary" aria-label={t(pattern.title, locale)}>
-          <div className={cn("pattern-card__media relative w-full", variant === "large" && "pattern-card__media--large", ratio)}>
+          <div className={cn("pattern-card__media relative w-full", variant === "large" && "pattern-card__media--large", variant === "wide" && "pattern-card__media--wide", ratio)}>
             <Image
               key={displayImage}
               src={displayImage}
@@ -132,7 +132,7 @@ export function PatternCard({ pattern, variant = "default", priority, className 
                 max={variant === "compact" ? 4 : 6}
                 locale={locale}
               />
-              <span className="truncate text-caption text-muted">
+              <span className="hidden truncate text-caption text-muted sm:block">
                 {t(activeCw.name, locale)}
               </span>
             </div>

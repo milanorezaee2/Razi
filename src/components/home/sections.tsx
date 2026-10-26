@@ -306,7 +306,7 @@ export function ArtistsSection({ artists }: { artists: ArtistCardData[] }) {
       <SectionHeader eyebrow={dict.nav.artists} title={dict.home.artistsTitle} description={dict.home.artistsDesc} href={href(locale, "/artists")} hrefLabel={dict.nav.viewAll} />
       {/* Phones: one elegant swipe rail instead of four full-screen stacked cards. */}
       <Reveal className="mt-10 md:hidden">
-        <Carousel itemClassName="w-[84vw] xs:w-[74vw] sm:w-[400px]">
+        <Carousel itemClassName="w-[80vw] xs:w-[70vw] sm:w-[380px]">
           {artists.slice(0, 4).map((a) => (
             <ArtistCard key={a.id} artist={a} />
           ))}
@@ -327,7 +327,17 @@ export function PortfoliosSection({ items, title, description, eyebrow, hrefPath
   return (
     <section className="container-x section-y">
       <SectionHeader eyebrow={eyebrow} title={title} description={description} href={href(locale, hrefPath)} hrefLabel={dict.nav.viewAll} />
-      <Reveal className="mt-10">
+      {/* Phones: one cinematic swipe rail; the editorial bento is desktop-only. */}
+      <Reveal className="mt-10 md:hidden">
+        <Carousel itemClassName="w-[76vw] xs:w-[68vw] sm:w-[340px]">
+          {items.slice(0, 4).map((p, i) => (
+            <div key={p.id} className="aspect-[4/5]">
+              <PortfolioCard item={p} priority={i === 0} />
+            </div>
+          ))}
+        </Carousel>
+      </Reveal>
+      <Reveal className="mt-10 hidden md:block">
         <BentoGrid>
           {items.slice(0, 4).map((p, i) => (
             <div key={p.id} className={bentoSpan[i === 0 ? "hero" : i === 1 ? "tall" : i === 2 ? "square" : "wide"]}>
@@ -348,7 +358,18 @@ export function StylesSection({ categories, counts }: { categories: Category[]; 
     <section className="bg-background-secondary">
       <div className="container-x section-y">
         <SectionHeader eyebrow={dict.nav.styles} title={dict.home.stylesTitle} description={dict.home.stylesDesc} href={href(locale, "/styles")} hrefLabel={dict.nav.viewAll} />
-        <Reveal className="mt-10">
+        {/* Phones: swipeable style tiles instead of the desktop mosaic. */}
+        <Reveal className="mt-10 md:hidden">
+          <Carousel itemClassName="w-[58vw] xs:w-[50vw] sm:w-[300px]">
+            {cats.map((c) => {
+              const n = counts[c.id] ?? 0;
+              return (
+                <StyleCard key={c.id} href={href(locale, `/styles/${c.slug}`)} title={t(c.name, locale)} image={c.image} className="aspect-[4/5]" count={`${locale === "fa" ? faNum(n) : n} ${dict.common.patterns}`} />
+              );
+            })}
+          </Carousel>
+        </Reveal>
+        <Reveal className="mt-10 hidden md:block">
           <BentoGrid rows="auto-rows-[152px] sm:auto-rows-[176px] md:auto-rows-[220px]">
             {cats.map((c, i) => {
               const span = i === 0 ? "col-span-2 row-span-2 md:col-span-3 lg:col-span-5 lg:row-span-2" : i === 3 ? "col-span-2 md:col-span-3 lg:col-span-4" : "col-span-1 md:col-span-3 lg:col-span-3";
@@ -371,7 +392,7 @@ export function SpacesSection({ spaces }: { spaces: Space[] }) {
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.nav.spaces} title={dict.home.spacesTitle} description={dict.home.spacesDesc} href={href(locale, "/spaces")} hrefLabel={dict.nav.viewAll} />
       <Reveal className="mt-10">
-        <Carousel itemClassName="w-[54vw] xs:w-[42vw] sm:w-[32vw] md:w-[26vw] lg:w-[22vw] xl:w-[260px]">
+        <Carousel itemClassName="w-[48vw] xs:w-[40vw] sm:w-[32vw] md:w-[26vw] lg:w-[22vw] xl:w-[260px]">
           {spaces.map((s) => (
             <StyleCard key={s.id} href={href(locale, `/spaces/${s.slug}`)} title={t(s.name, locale)} image={s.image} className="aspect-[4/5]" />
           ))}
@@ -393,7 +414,7 @@ export function ExclusiveSection({ products, heroImage }: { products: ProductCar
         <div className="mt-10 grid gap-5 lg:grid-cols-2 lg:items-stretch">
           {/* hero image — decorative, full height */}
           <Reveal className="h-full lg:self-stretch">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl sm:aspect-[16/10] lg:aspect-auto lg:h-full">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-xl lg:aspect-auto lg:h-full">
               <Image src={heroImage} alt={dict.home.exclusiveTitle} fill sizes="(max-width:1024px) 100vw, 50vw" className="img-zoom object-cover" />
               <div className="absolute inset-0 vignette" />
               <div className="absolute inset-x-0 bottom-0 p-6">
@@ -402,8 +423,18 @@ export function ExclusiveSection({ products, heroImage }: { products: ProductCar
               </div>
             </div>
           </Reveal>
+          {/* Phones: product rail under the banner */}
+          <div className="md:hidden">
+            <Carousel itemClassName="w-[46vw] xs:w-[42vw]">
+              {products.slice(0, 4).map((p) => (
+                <div key={p.id} className="h-full overflow-hidden rounded-xl bg-white text-foreground dark:bg-surface">
+                  <ProductCard product={p} />
+                </div>
+              ))}
+            </Carousel>
+          </div>
           {/* 4 product cards: 2 top + 2 bottom */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="hidden grid-cols-2 gap-4 md:grid">
             {products.slice(0, 4).map((p, i) => (
               <Reveal key={p.id} delay={i * 70}>
                 <div className="rounded-xl bg-white text-foreground dark:bg-surface overflow-hidden h-full">
@@ -455,7 +486,7 @@ export function B2BCustomSection({ image1, image2, showB2B = true, showCustom = 
       <div className={items.length === 1 ? "grid gap-6" : "grid gap-6 lg:grid-cols-2"}>
         {items.map((it, i) => (
           <Reveal key={it.path} delay={i * 80}>
-            <Link href={href(locale, it.path)} className="group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-xl p-6 text-white sm:p-8 md:min-h-[480px]">
+            <Link href={href(locale, it.path)} className="group relative flex aspect-[4/3] min-h-0 flex-col justify-end overflow-hidden rounded-xl p-6 text-white sm:aspect-[16/10] sm:p-8 md:aspect-auto md:min-h-[480px]">
               <Image src={it.image} alt="" fill sizes="(max-width:1024px) 100vw, 50vw" className="img-zoom object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/90 via-[#0a0d13]/40 to-[#0a0d13]/10" />
               <div className="relative">
@@ -479,7 +510,27 @@ export function StoriesSection({ stories, artists }: { stories: Story[]; artists
     <section className="bg-background-secondary">
       <div className="container-x section-y">
         <SectionHeader eyebrow={dict.nav.stories} title={dict.home.storiesTitle} description={dict.home.storiesDesc} href={href(locale, "/stories")} hrefLabel={dict.nav.viewAll} />
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        {/* Phones: a calm reading list with square thumbs. */}
+        <div className="mt-6 md:hidden">
+          {stories.slice(0, 3).map((s, i) => {
+            const a = artists.find((x) => x.id === s.artistId);
+            return (
+              <Reveal key={s.id} delay={i * 60} className="border-b border-border last:border-b-0">
+                <Link href={href(locale, `/stories/${s.slug}`)} className="group flex items-center gap-4 py-4">
+                  <span className="relative h-[92px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-background">
+                    <Image src={s.image} alt="" fill sizes="92px" className="img-zoom object-cover" />
+                  </span>
+                  <span className="min-w-0">
+                    {a && <span className="block text-caption font-medium text-accent">{t(a.name, locale)}</span>}
+                    <span className="mt-1 block line-clamp-2 font-semibold leading-snug text-foreground group-hover:text-accent transition-colors">{t(s.title, locale)}</span>
+                    <span className="mt-1 block line-clamp-2 text-caption leading-6 text-foreground-secondary">{t(s.excerpt, locale)}</span>
+                  </span>
+                </Link>
+              </Reveal>
+            );
+          })}
+        </div>
+        <div className="mt-10 hidden gap-6 md:grid md:grid-cols-3">
           {stories.slice(0, 3).map((s, i) => {
             const a = artists.find((x) => x.id === s.artistId);
             return (
@@ -512,7 +563,7 @@ export function NewsletterSection() {
   const { dict } = useLocale();
   return (
     <section className="container-x section-y">
-      <Reveal className="relative overflow-hidden rounded-xl border border-border bg-surface px-6 py-14 text-center md:px-12 md:py-20">
+      <Reveal className="relative overflow-hidden rounded-xl border border-border bg-surface px-5 py-10 text-center md:px-12 md:py-20">
         <div className="pointer-events-none absolute -bottom-32 start-1/2 h-64 w-[60%] -translate-x-1/2 rounded-full bg-accent/15 blur-[100px] rtl:translate-x-1/2" />
         <p className="text-label text-accent">Newsletter</p>
         <h2 className="mt-4 font-display text-h1 text-balance">{dict.common.newsletterTitle}</h2>

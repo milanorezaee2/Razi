@@ -55,14 +55,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const featuredCats = site.categories.filter((c) => c.featured).sort((a, b) => a.order - b.order);
 
   const renderSection = (key: string) => {
+    const section = renderFlowSection(key);
+    if (!section || key === "discovery") return section;
+    return (
+      <div key={key} data-home-section={key} className="home-flow__item">
+        {section}
+      </div>
+    );
+  };
+  const renderFlowSection = (key: string) => {
     switch (key) {
       case "hero":
         return <Hero hero={site.hero} patterns={heroPatterns} stats={stats} />;
       case "discovery":
         return (
           <>
-            <DiscoverySection patterns={patterns.filter((p) => p.featured)} categories={featuredCats} />
-            {featuredCats.length > 0 && <CategoriesSection categories={featuredCats} />}
+            <div data-home-section="discovery" className="home-flow__item">
+              <DiscoverySection patterns={patterns.filter((p) => p.featured)} categories={featuredCats} />
+            </div>
+            {featuredCats.length > 0 && (
+              <div data-home-section="categories" className="home-flow__item">
+                <CategoriesSection categories={featuredCats} />
+              </div>
+            )}
           </>
         );
       case "trending":
@@ -99,10 +114,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   };
 
   return (
-    <>
+    <div className="home-flow">
       {sections.map((section) => (
         <Fragment key={section.key}>{renderSection(section.key)}</Fragment>
       ))}
-    </>
+    </div>
   );
 }

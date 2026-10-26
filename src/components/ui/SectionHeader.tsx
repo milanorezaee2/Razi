@@ -18,7 +18,7 @@ interface Props {
 export function SectionHeader({ eyebrow, title, description, href, hrefLabel, align = "start", size = "md", className, tone = "default" }: Props) {
   const inverse = tone === "inverse";
   return (
-    <Reveal className={cn("flex flex-col gap-6 md:flex-row md:items-end md:justify-between", align === "center" && "md:flex-col md:items-center text-center", className)}>
+    <Reveal className={cn("section-header flex flex-col gap-6 md:flex-row md:items-end md:justify-between", align === "center" && "md:flex-col md:items-center text-center", className)}>
       <div className={cn("max-w-2xl", align === "center" && "mx-auto")}>
         {eyebrow && (
           <p className={cn("text-label mb-4 flex items-center gap-3", inverse ? "text-white/60" : "text-accent")}>
@@ -27,7 +27,7 @@ export function SectionHeader({ eyebrow, title, description, href, hrefLabel, al
           </p>
         )}
         <h2 className={cn("font-display text-balance", size === "lg" ? "text-h1" : "text-h2", inverse ? "text-white" : "text-foreground")}>{title}</h2>
-        {description && <p className={cn("mt-4 text-body-lg max-w-xl", inverse ? "text-white/70" : "text-foreground-secondary", align === "center" && "mx-auto")}>{description}</p>}
+        {description && <p className={cn("section-header__desc mt-4 text-body-lg max-w-xl", inverse ? "text-white/70" : "text-foreground-secondary", align === "center" && "mx-auto")}>{description}</p>}
       </div>
       {href && hrefLabel && (
         <Link
