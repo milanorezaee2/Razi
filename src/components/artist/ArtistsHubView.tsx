@@ -167,7 +167,7 @@ export function ArtistsHubView({
               </span>
             </div>
           </div>
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-border lg:aspect-[5/4]">
+          <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-border lg:aspect-[5/4]">
             {heroImage && (
               <Image
                 src={heroImage}

@@ -22,18 +22,18 @@ export default async function StoriesPage({ params }: { params: Promise<{ locale
   return (
     <>
       <PageHero eyebrow={d.nav.stories} title={d.home.storiesTitle} description={d.home.storiesDesc} />
-      <div className="container-x space-y-16 pb-20">
+      <div className="container-x pb-16 lg:space-y-16 lg:pb-20">
         {site.stories.map((s, i) => {
           const a = site.artists.find((x) => x.id === s.artistId);
           return (
-            <Reveal key={s.id}>
-              <Link href={href(locale, `/stories/${s.slug}`)} className={`group grid items-center gap-8 lg:grid-cols-12 ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
-                <div className="relative aspect-[16/10] overflow-hidden rounded-lg lg:col-span-7"><Image src={s.image} alt="" fill sizes="(max-width:1024px) 100vw, 60vw" className="img-zoom object-cover" /></div>
-                <div className="lg:col-span-5">
+            <Reveal key={s.id} className="border-b border-border py-4 last:border-b-0 lg:border-b-0 lg:py-0">
+              <Link href={href(locale, `/stories/${s.slug}`)} className={`group flex items-center gap-4 lg:grid lg:items-center lg:gap-8 lg:grid-cols-12 ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
+                <div className="relative aspect-square w-[108px] shrink-0 self-start overflow-hidden rounded-xl lg:aspect-[16/10] lg:w-auto lg:self-auto lg:col-span-7"><Image src={s.image} alt="" fill sizes="(max-width:1024px) 108px, 60vw" className="img-zoom object-cover" /></div>
+                <div className="min-w-0 lg:col-span-5">
                   {a && <p className="text-label text-accent">{t(a.name, locale)} · {t(a.profession, locale)}</p>}
-                  <h2 className="mt-3 font-display text-h2 text-balance group-hover:text-accent transition-colors">{t(s.title, locale)}</h2>
-                  <p className="mt-4 text-body text-foreground-secondary">{t(s.excerpt, locale)}</p>
-                  <p className="mt-6 font-display text-h3 italic text-foreground-secondary">{t(s.body, locale)}</p>
+                  <h2 className="mt-1 line-clamp-2 font-display text-h4 leading-snug text-balance group-hover:text-accent transition-colors lg:mt-3 lg:line-clamp-none lg:text-h2">{t(s.title, locale)}</h2>
+                  <p className="mt-1.5 line-clamp-2 text-caption leading-6 text-foreground-secondary lg:mt-4 lg:line-clamp-none lg:text-body">{t(s.excerpt, locale)}</p>
+                  <p className="mt-6 hidden font-display text-h3 italic text-foreground-secondary lg:block">{t(s.body, locale)}</p>
                 </div>
               </Link>
             </Reveal>

@@ -2895,28 +2895,80 @@ html[lang="fa"] .pf-hero-title span {
     aspect-ratio: 16 / 10 !important;
   }
 
-  /* Narrow rail cards: colourway dots never spill past the card edge */
+  /* Card bodies get real inset padding on phones (text no longer flush
+     with the card edge; swatch rings are never clipped). */
+  .pattern-card__info {
+    padding: 0.8rem 0.9rem 0.95rem;
+  }
+
+  /* Narrow rail cards: colourway dots never spill past the card edge,
+     with 3px of air so the active dot's ring is never clipped. */
   .pattern-card__colorways {
     overflow: hidden;
+    padding: 3px;
+    margin: -3px;
+  }
+
+  .pattern-card__colorways button:nth-of-type(n + 5),
+  .pattern-card__colorways > div > span,
+  .product-card__colors button:nth-of-type(n + 5),
+  .product-card__colors > div > span {
+    display: none;
+  }
+
+  .product-card__colors {
+    overflow: hidden;
+    padding: 3px;
+    margin: -3px;
   }
 
   .pattern-card__colorways > div {
     min-width: 0;
   }
 
-  /* Section headers — tighter, calmer type on phones */
+  /* Section headers — true app pattern on phones: eyebrow + title at the
+     start, the "view all" link as a pill on the same row, short copy. */
   .public-app-shell .section-header {
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 0.9rem;
+  }
+
+  .public-app-shell .section-header.text-center {
+    display: flex;
+  }
+
+  .section-header > div {
+    min-width: 0;
+  }
+
+  .section-header h2 {
+    font-size: clamp(1.45rem, 6.4vw, 1.95rem);
+    line-height: 1.3;
+  }
+
+  .section-header .text-label {
+    margin-bottom: 0.55rem;
   }
 
   .section-header__desc {
-    margin-top: 0.6rem;
-    font-size: 0.92rem;
-    line-height: 1.85;
+    margin-top: 0.55rem;
+    font-size: 0.9rem;
+    line-height: 1.8;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     overflow: hidden;
+  }
+
+  .section-header > a {
+    border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+    border-radius: 999px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1;
+    white-space: nowrap;
   }
 
   /* Artist cards — compact profile banners on phones (no long bios) */
@@ -3092,7 +3144,7 @@ html[lang="fa"] .pf-hero-title span {
 
   .home-flow__item {
     display: block;
-    order: 2;
+    order: 7;
     min-width: 0;
   }
 
@@ -3102,6 +3154,26 @@ html[lang="fa"] .pf-hero-title span {
 
   .home-flow__item[data-home-section="categories"] {
     order: 1;
+  }
+
+  .home-flow__item[data-home-section="bestSellers"] {
+    order: 2;
+  }
+
+  .home-flow__item[data-home-section="trending"] {
+    order: 3;
+  }
+
+  .home-flow__item[data-home-section="discovery"] {
+    order: 4;
+  }
+
+  .home-flow__item[data-home-section="exclusive"] {
+    order: 5;
+  }
+
+  .home-flow__item[data-home-section="newPatterns"] {
+    order: 6;
   }
 }
 

@@ -85,7 +85,15 @@ export function DiscoverySection({ patterns, categories }: { patterns: PatternCa
   return (
     <section id="discover" className="container-x section-y">
       <SectionHeader eyebrow={dict.home.discoveryEyebrow} title={dict.home.discoveryTitle} description={dict.home.discoveryDesc} href={href(locale, "/patterns")} hrefLabel={dict.nav.viewAll} size="lg" />
-      <div className="mt-10 grid gap-5 lg:grid-cols-12 lg:gap-6">
+      {/* Phones: one swipe rail for the whole discovery set. */}
+      <Reveal className="mt-8 md:hidden">
+        <Carousel>
+          {patterns.slice(0, 5).map((p) => (
+            <PatternCard key={p.id} pattern={p} />
+          ))}
+        </Carousel>
+      </Reveal>
+      <div className="mt-10 hidden gap-5 md:grid lg:grid-cols-12 lg:gap-6">
         <Reveal className="lg:col-span-6">
           <PatternCard pattern={lead} variant="large" priority />
         </Reveal>
@@ -248,7 +256,16 @@ export function BestSellersSection({ patterns, products }: { patterns: PatternCa
   return (
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.common.bestSeller} title={dict.home.bestTitle} description={dict.home.bestDesc} href={href(locale, "/patterns?sort=best")} hrefLabel={dict.nav.viewAll} />
-      <div className="mt-10 grid grid-cols-2 gap-3.5 sm:gap-5 lg:grid-cols-4">
+      {/* Phones: compact card bodies keep the 2-column grid calm. */}
+      <div className="mt-8 grid grid-cols-2 gap-3 md:hidden">
+        {patterns.slice(0, 2).map((p, i) => (
+          <Reveal key={p.id} delay={i * 60}><PatternCard pattern={p} variant="compact" /></Reveal>
+        ))}
+        {products.slice(0, 2).map((p, i) => (
+          <Reveal key={p.id} delay={(i + 2) * 60}><ProductCard product={p} variant="compact" /></Reveal>
+        ))}
+      </div>
+      <div className="mt-10 hidden grid-cols-2 gap-3.5 sm:gap-5 md:grid lg:grid-cols-4">
         {patterns.slice(0, 2).map((p, i) => (
           <Reveal key={p.id} delay={i * 60}><PatternCard pattern={p} /></Reveal>
         ))}
@@ -329,9 +346,9 @@ export function PortfoliosSection({ items, title, description, eyebrow, hrefPath
       <SectionHeader eyebrow={eyebrow} title={title} description={description} href={href(locale, hrefPath)} hrefLabel={dict.nav.viewAll} />
       {/* Phones: one cinematic swipe rail; the editorial bento is desktop-only. */}
       <Reveal className="mt-10 md:hidden">
-        <Carousel itemClassName="w-[76vw] xs:w-[68vw] sm:w-[340px]">
+        <Carousel itemClassName="w-[78vw] xs:w-[70vw] sm:w-[350px]">
           {items.slice(0, 4).map((p, i) => (
-            <div key={p.id} className="aspect-[4/5]">
+            <div key={p.id} className="aspect-[4/3]">
               <PortfolioCard item={p} priority={i === 0} />
             </div>
           ))}

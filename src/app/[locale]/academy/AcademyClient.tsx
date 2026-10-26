@@ -278,7 +278,7 @@ function CourseCard({
             src={item.image}
             alt={t(item.title, locale)}
             fill
-            sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
+            sizes="(max-width:1024px) 50vw, 33vw"
             className="img-zoom object-cover"
           />
         ) : (
@@ -318,15 +318,15 @@ function CourseCard({
       </Link>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-3.5 sm:p-5">
         {item.category && <p className="text-caption text-accent mb-1.5">{t(item.category.name, locale)}</p>}
-        <Link href={url} className="block font-semibold text-foreground hover:text-accent transition-colors line-clamp-2 leading-snug mb-2">
+        <Link href={url} className="mb-2 block text-[15px] font-semibold leading-snug text-foreground transition-colors line-clamp-2 hover:text-accent sm:text-base">
           {t(item.title, locale)}
         </Link>
-        <p className="text-body-sm text-foreground-secondary line-clamp-2 mb-4">{t(item.excerpt, locale)}</p>
+        <p className="text-body-sm text-foreground-secondary line-clamp-2 mb-4 hidden sm:block">{t(item.excerpt, locale)}</p>
 
         {/* Meta row — every value comes from the item itself */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-caption text-foreground-secondary mb-3">
+        <div className="mb-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-caption text-foreground-secondary sm:gap-x-4">
           <span className="inline-flex items-center gap-1 tabular">
             <Clock className="h-3.5 w-3.5" />
             {formatDuration(minutesOf(item), locale, dict.common)}
@@ -337,7 +337,7 @@ function CourseCard({
               {isFA ? faNum(lessonsOf(item)) : lessonsOf(item)} {dict.common.lessons}
             </span>
           )}
-          <span className="inline-flex items-center gap-1">
+          <span className="hidden items-center gap-1 sm:inline-flex">
             <Signal className="h-3.5 w-3.5" />
             {dict.common[item.difficulty]}
           </span>
@@ -366,14 +366,14 @@ function CourseCard({
             {isFree ? (
               <span className="font-semibold text-success">{dict.common.free}</span>
             ) : (
-              <span className="font-display text-h4 text-foreground tabular">{priceStr}</span>
+              <span className="font-display text-[15px] text-foreground tabular sm:text-h4">{priceStr}</span>
             )}
           </div>
         </div>
       </div>
 
       {/* CTA */}
-      <div className="px-5 pb-5">
+      <div className="px-3.5 pb-3.5 sm:px-5 sm:pb-5">
         <button
           onClick={() => onEnroll(item)}
           className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:scale-[0.98]"
@@ -720,7 +720,7 @@ export function AcademyClient({ items, liveEvent, categories, initialCategory, s
                 {n(gridItems.length)} {isFA ? "مورد" : "items"}
               </span>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3.5 sm:gap-6 xl:grid-cols-3">
               {gridItems.map((item, i) => (
                 <Reveal key={item.id} delay={i * 60}>
                   <CourseCard item={item} onEnroll={setEnrollItem} stat={itemStats[item.slug]} />
