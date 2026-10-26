@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUp, ArrowUpRight, Camera, Mail, MapPin, Phone, PlayCircle, Send, Sparkles, Users } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Camera, ChevronDown, Mail, MapPin, Phone, PlayCircle, Send, Sparkles, Users } from "lucide-react";
+import { useState } from "react";
 import { useAuth, useLocale, useTheme } from "@/components/providers/AppProviders";
-import { href } from "@/lib/utils";
+import { cn, href } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { NewsletterForm } from "./NewsletterForm";
 import { Reveal } from "@/components/ui/Reveal";
@@ -19,6 +20,7 @@ export function Footer() {
   const other = locale === "fa" ? "en" : "fa";
   const switchHref = pathname.replace(new RegExp(`^/${locale}`), `/${other}`) || `/${other}`;
   const year = new Date().getFullYear();
+  const [openCol, setOpenCol] = useState(0);
 
   const socials = [
     { icon: Camera, label: "Instagram", href: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://instagram.com" },
@@ -156,15 +158,25 @@ export function Footer() {
         </div>
 
         {/* ── Link directory ────────────────────────────────────────────── */}
-        <div className="site-footer__directories mt-12 pt-10 md:mt-16 md:pt-12">
-          <div className="site-footer__directory-grid grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 md:gap-x-8">
-            {cols.map((c, index) => (
-              <Reveal key={c.title} as="div" variant="fade" delay={index * 65} className="site-footer__link-column">
-                <p className="site-footer__column-title flex items-center gap-2.5 text-label text-muted">
+        <div className="site-footer__directories mt-10 pt-8 md:mt-16 md:pt-12">
+          <div className="site-footer__directory-grid grid grid-cols-1 gap-x-6 md:grid-cols-4 md:gap-x-8 md:gap-y-10">
+            {cols.map((c, index) => {
+              const open = openCol === index;
+              return (
+              <Reveal key={c.title} as="div" variant="fade" delay={index * 65} className="site-footer__link-column border-b border-border/70 last:border-b-0 md:border-b-0">
+                {/* Phones: each directory is a tappable accordion row. */}
+                <button type="button" onClick={() => setOpenCol(open ? -1 : index)} aria-expanded={open} className="flex w-full items-center justify-between gap-3 py-4 text-start md:hidden">
+                  <span className="flex items-center gap-2.5 text-label text-muted">
+                    <span aria-hidden className="site-footer__column-marker h-3.5 w-1 rounded-full bg-accent" />
+                    {c.title}
+                  </span>
+                  <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted transition-transform duration-300", open && "rotate-180")} />
+                </button>
+                <p className="site-footer__column-title hidden items-center gap-2.5 text-label text-muted md:flex">
                   <span aria-hidden className="site-footer__column-marker h-3.5 w-1 rounded-full bg-accent" />
                   {c.title}
                 </p>
-                <ul className="site-footer__link-list mt-5 space-y-3">
+                <ul className={cn("site-footer__link-list space-y-3 pb-5 md:mt-5 md:block md:pb-0", open ? "block" : "hidden")}>
                   {c.links.map(([label, path]) => (
                     <li key={path}>
                       <Link href={href(locale, path)} className="site-footer__link text-sm text-foreground-secondary">
@@ -175,7 +187,8 @@ export function Footer() {
                   ))}
                 </ul>
               </Reveal>
-            ))}
+              );
+            })}
           </div>
         </div>
 

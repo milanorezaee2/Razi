@@ -323,7 +323,7 @@ export function ArtistsSection({ artists }: { artists: ArtistCardData[] }) {
       <SectionHeader eyebrow={dict.nav.artists} title={dict.home.artistsTitle} description={dict.home.artistsDesc} href={href(locale, "/artists")} hrefLabel={dict.nav.viewAll} />
       {/* Phones: one elegant swipe rail instead of four full-screen stacked cards. */}
       <Reveal className="mt-10 md:hidden">
-        <Carousel itemClassName="w-[80vw] xs:w-[70vw] sm:w-[380px]">
+        <Carousel itemClassName="w-[76vw] xs:w-[68vw] sm:w-[380px]">
           {artists.slice(0, 4).map((a) => (
             <ArtistCard key={a.id} artist={a} />
           ))}
@@ -474,7 +474,15 @@ export function EducationSection({ items }: { items: EducationCardData[] }) {
   return (
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.nav.education} title={dict.home.educationTitle} description={dict.home.educationDesc} href={href(locale, "/academy")} hrefLabel={dict.nav.viewAll} />
-      <div className="mt-10 grid gap-6 lg:grid-cols-12">
+      {/* Phones: swipe rail of the same courses as the desktop spread. */}
+      <Reveal className="mt-8 md:hidden">
+        <Carousel itemClassName="w-[76vw] xs:w-[68vw] sm:w-[360px]">
+          {items.slice(0, 5).map((e) => (
+            <EducationCard key={e.id} item={e} />
+          ))}
+        </Carousel>
+      </Reveal>
+      <div className="mt-10 hidden gap-6 md:grid lg:grid-cols-12">
         <Reveal className="lg:col-span-7"><EducationCard item={lead} variant="large" progress={0} /></Reveal>
         <Reveal className="lg:col-span-5 rounded-xl border border-border p-2 md:p-4">
           <p className="px-3 pt-2 text-label text-muted">{locale === "fa" ? "محبوب‌ترین‌ها" : "Popular"}</p>

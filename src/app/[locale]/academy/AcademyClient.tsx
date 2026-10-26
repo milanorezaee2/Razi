@@ -323,7 +323,7 @@ function CourseCard({
         <Link href={url} className="mb-2 block text-[15px] font-semibold leading-snug text-foreground transition-colors line-clamp-2 hover:text-accent sm:text-base">
           {t(item.title, locale)}
         </Link>
-        <p className="text-body-sm text-foreground-secondary line-clamp-2 mb-4 hidden sm:block">{t(item.excerpt, locale)}</p>
+        <p className="mb-3 line-clamp-2 text-[12.5px] leading-5 text-foreground-secondary sm:mb-4 sm:text-body-sm">{t(item.excerpt, locale)}</p>
 
         {/* Meta row — every value comes from the item itself */}
         <div className="mb-3 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-caption text-foreground-secondary sm:gap-x-4">
@@ -337,7 +337,7 @@ function CourseCard({
               {isFA ? faNum(lessonsOf(item)) : lessonsOf(item)} {dict.common.lessons}
             </span>
           )}
-          <span className="hidden items-center gap-1 sm:inline-flex">
+          <span className="inline-flex items-center gap-1">
             <Signal className="h-3.5 w-3.5" />
             {dict.common[item.difficulty]}
           </span>

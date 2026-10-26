@@ -107,7 +107,7 @@ export function PortfolioHero({
             <h1 className="pf-hero-title mt-4 font-display text-[clamp(2.1rem,8.6vw,5.2rem)] leading-[1.25] tracking-tight md:mt-6 md:text-[clamp(2.8rem,5.2vw,5.2rem)] md:leading-[1.3] md:whitespace-nowrap">
               <span>{titleLine1}</span>{" "}<span className="text-[#e4cba4]">{titleLine2}</span>
             </h1>
-            <p className="mt-4 line-clamp-4 max-w-lg text-sm leading-8 text-white/70 md:mt-6 md:line-clamp-none md:text-base md:leading-8">
+            <p className="mt-4 max-w-lg text-sm leading-8 text-white/70 md:mt-6 md:text-base md:leading-8">
               {desc}
             </p>
             <div className="mt-6 grid grid-cols-2 items-center gap-2.5 sm:flex sm:flex-wrap sm:gap-3 md:mt-8">

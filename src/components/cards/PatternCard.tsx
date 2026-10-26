@@ -132,7 +132,7 @@ export function PatternCard({ pattern, variant = "default", priority, className 
                 max={variant === "compact" ? 4 : 6}
                 locale={locale}
               />
-              <span className="hidden truncate text-caption text-muted sm:block">
+              <span className="min-w-0 truncate text-caption text-muted">
                 {t(activeCw.name, locale)}
               </span>
             </div>

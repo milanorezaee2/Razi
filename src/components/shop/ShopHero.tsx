@@ -89,7 +89,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
           {eyebrow}
         </p>
         <h1 className="anim-blur-in mt-4 font-display text-h1 text-balance" style={{ animationDelay: "80ms" }}>{title}</h1>
-        <p className="anim-blur-in mt-4 line-clamp-3 max-w-md text-body-lg text-white/70 sm:line-clamp-none" style={{ animationDelay: "160ms" }}>{description}</p>
+        <p className="anim-blur-in mt-4 max-w-md text-body-lg text-white/70" style={{ animationDelay: "160ms" }}>{description}</p>
 
         <div className="anim-fade-up mt-6 flex flex-wrap gap-3 sm:mt-8" style={{ animationDelay: "220ms" }}>
           <Button href={href(locale, "/shop?owner=site")} variant="accent" size="md">

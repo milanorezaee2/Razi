@@ -33,7 +33,7 @@ export default async function StoriesPage({ params }: { params: Promise<{ locale
                   {a && <p className="text-label text-accent">{t(a.name, locale)} · {t(a.profession, locale)}</p>}
                   <h2 className="mt-1 line-clamp-2 font-display text-h4 leading-snug text-balance group-hover:text-accent transition-colors lg:mt-3 lg:line-clamp-none lg:text-h2">{t(s.title, locale)}</h2>
                   <p className="mt-1.5 line-clamp-2 text-caption leading-6 text-foreground-secondary lg:mt-4 lg:line-clamp-none lg:text-body">{t(s.excerpt, locale)}</p>
-                  <p className="mt-6 hidden font-display text-h3 italic text-foreground-secondary lg:block">{t(s.body, locale)}</p>
+                  <p className="mt-2 font-display text-[15px] italic leading-7 text-foreground-secondary lg:mt-6 lg:text-h3">{t(s.body, locale)}</p>
                 </div>
               </Link>
             </Reveal>
