@@ -50,7 +50,13 @@ export function PatternCard({ pattern, variant = "default", priority, className 
               alt={`${t(pattern.title, locale)} — ${t(activeCw.name, locale)}`}
               fill
               priority={priority}
-              sizes={variant === "large" ? "(max-width:768px) 180vw, 50vw" : "(max-width:640px) 90vw, (max-width:1024px) 33vw, 25vw"}
+              sizes={
+                variant === "large" || variant === "wide"
+                  ? "(max-width:767px) 92vw, (max-width:1024px) 66vw, 50vw"
+                  : variant === "compact"
+                    ? "(max-width:767px) 46vw, (max-width:1024px) 25vw, 20vw"
+                    : "(max-width:767px) 62vw, (max-width:1024px) 33vw, 25vw"
+              }
               className="img-zoom object-cover anim-scale-fade"
             />
           </div>

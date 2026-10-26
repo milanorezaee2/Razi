@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /** Horizontal scroll rail with snap + RTL-aware arrow controls. */
-export function Carousel({ children, className, itemClassName = "w-[78vw] xs:w-[60vw] sm:w-[44vw] md:w-[32vw] lg:w-[24vw] xl:w-[300px]" }: { children: React.ReactNode[]; className?: string; itemClassName?: string }) {
+export function Carousel({ children, className, itemClassName = "w-[62vw] xs:w-[48vw] sm:w-[38vw] md:w-[30vw] lg:w-[24vw] xl:w-[300px]" }: { children: React.ReactNode[]; className?: string; itemClassName?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [canPrev, setPrev] = useState(false);
   const [canNext, setNext] = useState(true);
@@ -43,7 +43,7 @@ export function Carousel({ children, className, itemClassName = "w-[78vw] xs:w-[
 
   return (
     <div className={cn("relative", className)}>
-      <div ref={ref} className="no-scrollbar scroll-snap-x -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:-mx-0 md:px-0">
+      <div ref={ref} className="no-scrollbar scroll-snap-x -mx-4 flex gap-3.5 overflow-x-auto px-4 pb-2 sm:gap-4 md:-mx-0 md:px-0">
         {children.map((c, i) => (
           <div key={i} className={cn("snap-item shrink-0", itemClassName)}>{c}</div>
         ))}

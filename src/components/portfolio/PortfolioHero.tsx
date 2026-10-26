@@ -97,14 +97,14 @@ export function PortfolioHero({
           </span>
         </div>
 
-        <div className="grid items-center gap-10 py-10 md:gap-12 md:py-14 lg:min-h-[640px] lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <div className="grid items-center gap-8 py-8 md:gap-12 md:py-14 lg:min-h-[640px] lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           {/* ── ستون متن ── */}
           <div>
             <p className="flex items-center gap-3 text-xs font-medium text-[#d6bc8e]">
               <span className="h-px w-9 bg-[#d6bc8e]/70" />
               {eyebrow}
             </p>
-            <h1 className="pf-hero-title mt-6 font-display text-[clamp(2.8rem,5.2vw,5.2rem)] leading-[1.3] tracking-tight whitespace-nowrap">
+            <h1 className="pf-hero-title mt-6 font-display text-[clamp(2.3rem,9vw,5.2rem)] leading-[1.3] tracking-tight md:text-[clamp(2.8rem,5.2vw,5.2rem)] md:whitespace-nowrap">
               <span>{titleLine1}</span>{" "}<span className="text-[#e4cba4]">{titleLine2}</span>
             </h1>
             <p className="mt-6 max-w-lg text-sm leading-8 text-white/70 md:text-base md:leading-8">

@@ -43,7 +43,7 @@ export default async function CustomPage({ params }: { params: Promise<{ locale:
       <section className="container-x pb-20">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-xl"><Image src={site.patterns[2]?.image ?? site.hero.image} alt="" fill sizes="40vw" className="object-cover" /></div>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl lg:aspect-[4/5]"><Image src={site.patterns[2]?.image ?? site.hero.image} alt="" fill sizes="(max-width:1024px) 92vw, 40vw" className="object-cover" /></div>
             <ol className="mt-8 space-y-4">
               {steps.map((s, i) => (
                 <Reveal as="li" key={s} delay={i * 60} className="flex items-center gap-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-caption tabular">{fa ? faNum(i + 1) : i + 1}</span><span className="font-medium">{s}</span></Reveal>

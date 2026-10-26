@@ -247,8 +247,8 @@ export default async function AcademyPage({
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0c1018]" />
 
-        <div className="container-x relative z-10 pt-[calc(var(--header-h)+3rem)] pb-16 md:pb-20">
-          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+        <div className="container-x relative z-10 pt-[calc(var(--announce-h,0px)+var(--header-h-mobile)+2rem)] pb-12 md:pt-[calc(var(--header-h)+3rem)] md:pb-20">
+          <div className="grid gap-9 lg:grid-cols-12 lg:items-center lg:gap-12">
             {/* Left: copy */}
             <div className="lg:col-span-5">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-caption text-white/70 mb-6 backdrop-blur-sm">

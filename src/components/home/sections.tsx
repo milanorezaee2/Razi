@@ -248,7 +248,7 @@ export function BestSellersSection({ patterns, products }: { patterns: PatternCa
   return (
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.common.bestSeller} title={dict.home.bestTitle} description={dict.home.bestDesc} href={href(locale, "/patterns?sort=best")} hrefLabel={dict.nav.viewAll} />
-      <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid grid-cols-2 gap-3.5 sm:gap-5 lg:grid-cols-4">
         {patterns.slice(0, 2).map((p, i) => (
           <Reveal key={p.id} delay={i * 60}><PatternCard pattern={p} /></Reveal>
         ))}
@@ -304,7 +304,15 @@ export function ArtistsSection({ artists }: { artists: ArtistCardData[] }) {
   return (
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.nav.artists} title={dict.home.artistsTitle} description={dict.home.artistsDesc} href={href(locale, "/artists")} hrefLabel={dict.nav.viewAll} />
-      <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      {/* Phones: one elegant swipe rail instead of four full-screen stacked cards. */}
+      <Reveal className="mt-10 md:hidden">
+        <Carousel itemClassName="w-[84vw] xs:w-[74vw] sm:w-[400px]">
+          {artists.slice(0, 4).map((a) => (
+            <ArtistCard key={a.id} artist={a} />
+          ))}
+        </Carousel>
+      </Reveal>
+      <div className="mt-10 hidden gap-5 md:grid md:grid-cols-2 xl:grid-cols-4">
         {artists.slice(0, 4).map((a, i) => (
           <Reveal key={a.id} delay={i * 70}><ArtistCard artist={a} /></Reveal>
         ))}
@@ -341,7 +349,7 @@ export function StylesSection({ categories, counts }: { categories: Category[]; 
       <div className="container-x section-y">
         <SectionHeader eyebrow={dict.nav.styles} title={dict.home.stylesTitle} description={dict.home.stylesDesc} href={href(locale, "/styles")} hrefLabel={dict.nav.viewAll} />
         <Reveal className="mt-10">
-          <BentoGrid rows="auto-rows-[180px] md:auto-rows-[220px]">
+          <BentoGrid rows="auto-rows-[152px] sm:auto-rows-[176px] md:auto-rows-[220px]">
             {cats.map((c, i) => {
               const span = i === 0 ? "col-span-2 row-span-2 md:col-span-3 lg:col-span-5 lg:row-span-2" : i === 3 ? "col-span-2 md:col-span-3 lg:col-span-4" : "col-span-1 md:col-span-3 lg:col-span-3";
               const n = counts[c.id] ?? 0;
@@ -363,9 +371,9 @@ export function SpacesSection({ spaces }: { spaces: Space[] }) {
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.nav.spaces} title={dict.home.spacesTitle} description={dict.home.spacesDesc} href={href(locale, "/spaces")} hrefLabel={dict.nav.viewAll} />
       <Reveal className="mt-10">
-        <Carousel itemClassName="w-[70vw] xs:w-[50vw] sm:w-[36vw] md:w-[28vw] lg:w-[22vw] xl:w-[260px]">
+        <Carousel itemClassName="w-[54vw] xs:w-[42vw] sm:w-[32vw] md:w-[26vw] lg:w-[22vw] xl:w-[260px]">
           {spaces.map((s) => (
-            <StyleCard key={s.id} href={href(locale, `/spaces/${s.slug}`)} title={t(s.name, locale)} image={s.image} className="aspect-[3/4]" />
+            <StyleCard key={s.id} href={href(locale, `/spaces/${s.slug}`)} title={t(s.name, locale)} image={s.image} className="aspect-[4/5]" />
           ))}
         </Carousel>
       </Reveal>
@@ -385,7 +393,7 @@ export function ExclusiveSection({ products, heroImage }: { products: ProductCar
         <div className="mt-10 grid gap-5 lg:grid-cols-2 lg:items-stretch">
           {/* hero image — decorative, full height */}
           <Reveal className="h-full lg:self-stretch">
-            <div className="relative h-full min-h-[420px] overflow-hidden rounded-xl lg:min-h-0">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl sm:aspect-[16/10] lg:aspect-auto lg:h-full">
               <Image src={heroImage} alt={dict.home.exclusiveTitle} fill sizes="(max-width:1024px) 100vw, 50vw" className="img-zoom object-cover" />
               <div className="absolute inset-0 vignette" />
               <div className="absolute inset-x-0 bottom-0 p-6">
@@ -447,7 +455,7 @@ export function B2BCustomSection({ image1, image2, showB2B = true, showCustom = 
       <div className={items.length === 1 ? "grid gap-6" : "grid gap-6 lg:grid-cols-2"}>
         {items.map((it, i) => (
           <Reveal key={it.path} delay={i * 80}>
-            <Link href={href(locale, it.path)} className="group relative flex min-h-[420px] flex-col justify-end overflow-hidden rounded-xl p-8 text-white md:min-h-[480px]">
+            <Link href={href(locale, it.path)} className="group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-xl p-6 text-white sm:p-8 md:min-h-[480px]">
               <Image src={it.image} alt="" fill sizes="(max-width:1024px) 100vw, 50vw" className="img-zoom object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/90 via-[#0a0d13]/40 to-[#0a0d13]/10" />
               <div className="relative">
@@ -477,7 +485,7 @@ export function StoriesSection({ stories, artists }: { stories: Story[]; artists
             return (
               <Reveal key={s.id} delay={i * 70}>
                 <Link href={href(locale, `/stories/${s.slug}`)} className="group block">
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-background">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-background md:aspect-[4/3]">
                     <Image src={s.image} alt="" fill sizes="(max-width:768px) 100vw, 33vw" className="img-zoom object-cover" />
                     <Quote className="absolute top-4 start-4 h-6 w-6 text-white/80" />
                   </div>

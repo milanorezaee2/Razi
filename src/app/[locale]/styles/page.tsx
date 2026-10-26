@@ -24,7 +24,7 @@ export default async function StylesPage({ params }: { params: Promise<{ locale:
     <>
       <PageHero eyebrow={d.nav.styles} title={d.home.stylesTitle} description={d.home.stylesDesc} />
       <div className="container-x pb-20">
-        <BentoGrid rows="auto-rows-[200px] md:auto-rows-[240px]">
+        <BentoGrid rows="auto-rows-[160px] sm:auto-rows-[188px] md:auto-rows-[240px]">
           {cats.map((c, i) => {
             const n = site.patterns.filter((p) => p.categoryId === c.id).length;
             const span = i % 5 === 0 ? "col-span-2 row-span-2 md:col-span-3 lg:col-span-6 lg:row-span-2" : i % 5 === 3 ? "col-span-2 md:col-span-3 lg:col-span-6" : "col-span-1 md:col-span-3 lg:col-span-3";

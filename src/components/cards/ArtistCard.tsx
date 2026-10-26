@@ -42,7 +42,7 @@ export function ArtistCard({
               src={artist.cover}
               alt=""
               fill
-              sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+              sizes="(max-width: 767px) 84vw, (max-width: 1023px) 50vw, 33vw"
               className="object-cover transition-transform duration-700 motion-safe:group-hover:scale-105"
             />
           )}

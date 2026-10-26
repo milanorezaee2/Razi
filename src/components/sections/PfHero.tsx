@@ -19,7 +19,7 @@ export function PfHero() {
   return (
     <section
       id="hero"
-      className="pf-hero relative isolate flex h-[100svh] min-h-[640px] max-h-[1080px] flex-col overflow-hidden bg-pf-ink text-white"
+      className="pf-hero relative isolate flex h-[100svh] min-h-[560px] max-h-[1080px] flex-col overflow-hidden bg-pf-ink text-white md:min-h-[640px]"
     >
       {/* background image with slow zoom */}
       <div className="absolute inset-0 overflow-hidden">
@@ -93,10 +93,10 @@ export function PfHero() {
 
         {/* name — two lines */}
         <h1 className="pf-name leading-none">
-          <span className="block text-[clamp(3.5rem,10vw,7rem)] font-display text-white animate-pf-fade-up" style={{ animationDelay: "100ms" }}>
+          <span className="block text-[clamp(2.6rem,11vw,7rem)] font-display text-white animate-pf-fade-up" style={{ animationDelay: "100ms" }}>
             {T("heroName1", lang)}
           </span>
-          <span className="block text-[clamp(3.5rem,10vw,7rem)] font-display text-white/85 animate-pf-fade-up" style={{ animationDelay: "250ms" }}>
+          <span className="block text-[clamp(2.6rem,11vw,7rem)] font-display text-white/85 animate-pf-fade-up" style={{ animationDelay: "250ms" }}>
             {T("heroName2", lang)}
           </span>
         </h1>

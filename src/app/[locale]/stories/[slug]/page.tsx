@@ -43,7 +43,7 @@ export default async function StoryPage({ params }: Props) {
   ];
   return (
     <article>
-      <section className="relative isolate h-[80svh] min-h-[520px] overflow-hidden bg-[#0d1117] text-white">
+      <section className="relative isolate h-[62svh] min-h-[420px] overflow-hidden bg-[#0d1117] text-white md:h-[80svh] md:min-h-[520px]">
         <Image src={s.image} alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/95 via-[#0a0d13]/40 to-[#0a0d13]/30" />
         <div className="container-x relative flex h-full flex-col justify-end pb-12 pt-[calc(var(--announce-h,0px)+var(--header-h))]">

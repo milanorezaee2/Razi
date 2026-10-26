@@ -204,6 +204,7 @@
     font-size: 15px;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
   }
   body {
     background: var(--background);
@@ -2878,9 +2879,12 @@ html[lang="fa"] .pf-hero-title span {
     aspect-ratio: 1 / 1 !important;
   }
 
+  /* Detail gallery: the stage owns the full content width on phones
+     (the previous 20rem cap boxed product imagery into the centre). */
   .mobile-gallery-stage {
-    width: min(100%, 20rem);
+    width: 100%;
     margin-inline: auto;
+    border-radius: 1rem;
   }
 
   .product-grid {
@@ -2973,6 +2977,47 @@ html[lang="fa"] .pf-hero-title span {
 
   .site-footer__contact-row {
     align-items: flex-start;
+  }
+
+  /* ── Luxury mobile polish ─────────────────────────────────────────────
+     Media containment, touch ergonomics and rail behaviour. These rules
+     guarantee every image/video stays inside the phone frame. */
+  .public-app-shell img,
+  .public-app-shell video,
+  .public-app-shell iframe {
+    max-width: 100%;
+  }
+
+  .public-app-shell a,
+  .public-app-shell button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari auto-zooms into fields smaller than 16px; keep forms calm. */
+  .public-app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .public-app-shell select,
+  .public-app-shell textarea {
+    font-size: 16px;
+  }
+
+  /* Snap rails align to the page gutter and never chain-scroll the page. */
+  .public-app-shell .scroll-snap-x {
+    scroll-padding-inline: 1rem;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Edge-to-edge bleed rails (categories, carousels) keep the first and
+     last card inside the safe frame. */
+  .mobile-category-list {
+    scroll-padding-inline: 1rem;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Editorial imagery gets a consistent, premium corner on phones. */
+  .public-app-shell .pattern-card > a,
+  .public-app-shell .product-card > a {
+    border-radius: 0.9rem;
   }
 }
 

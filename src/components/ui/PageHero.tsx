@@ -42,7 +42,7 @@ export function PageHero({
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/90 via-[#0a0d13]/40 to-[#0a0d13]/30" />
-        <div className="container-x relative flex min-h-[52svh] flex-col justify-end pb-12 pt-[calc(var(--header-h)+3rem)]">
+        <div className="container-x relative flex min-h-[44svh] flex-col justify-end pb-10 pt-[calc(var(--announce-h,0px)+var(--header-h-mobile)+2rem)] md:min-h-[52svh] md:pb-12 md:pt-[calc(var(--header-h)+3rem)]">
           {breadcrumb && locale && (
             <Breadcrumb
               items={breadcrumb}
@@ -59,7 +59,7 @@ export function PageHero({
     );
   }
   return (
-    <section className={cn("container-x pt-[calc(var(--header-h)+2.5rem)] pb-10 md:pt-[calc(var(--header-h)+4rem)]", className)}>
+    <section className={cn("container-x pt-[calc(var(--announce-h,0px)+var(--header-h-mobile)+1.75rem)] pb-10 md:pt-[calc(var(--header-h)+4rem)]", className)}>
       <div className={cn(align === "center" && "mx-auto text-center")}>
         {breadcrumb && locale && (
           <Breadcrumb items={breadcrumb} locale={locale} className="mb-6" />

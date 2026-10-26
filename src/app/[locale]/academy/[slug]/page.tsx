@@ -182,7 +182,7 @@ export default async function EducationDetail({ params }: Props) {
       />
 
       {/* Hero */}
-      <section className="relative isolate h-[70svh] min-h-[480px] overflow-hidden bg-[#0d1117] text-white">
+      <section className="relative isolate h-[58svh] min-h-[400px] overflow-hidden bg-[#0d1117] text-white md:h-[70svh] md:min-h-[480px]">
         <Image src={e.image} alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/95 via-[#0a0d13]/40 to-[#0a0d13]/30" />
         <div className="container-x relative flex h-full flex-col justify-end pb-12 pt-[calc(var(--announce-h,0px)+var(--header-h))]">
@@ -404,7 +404,7 @@ export default async function EducationDetail({ params }: Props) {
       {related.length > 0 && (
         <section className="container-x section-y">
           <SectionHeader eyebrow={d.nav.education} title={d.common.relatedTutorials} href={href(locale, "/academy")} hrefLabel={d.nav.viewAll} />
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((x, i) => <Reveal key={x.id} delay={i * 70}><EducationCard item={x} /></Reveal>)}
           </div>
         </section>

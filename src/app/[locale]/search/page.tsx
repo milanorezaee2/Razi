@@ -47,7 +47,7 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
         {total === 0 && <EmptyState title={d.search.noResults} />}
         {patterns.length > 0 && <section><SectionHeader title={d.nav.patterns} /><div className="mt-6"><PatternGrid patterns={patterns} /></div></section>}
         {products.length > 0 && <section><SectionHeader title={d.nav.products} /><div className="mt-6"><ProductGrid products={products} /></div></section>}
-        {education.length > 0 && <section><SectionHeader title={d.nav.education} /><div className="mt-6 grid gap-5 md:grid-cols-3">{education.map((e) => <EducationCard key={e.id} item={e} />)}</div></section>}
+        {education.length > 0 && <section><SectionHeader title={d.nav.education} /><div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{education.map((e) => <EducationCard key={e.id} item={e} />)}</div></section>}
       </div>
     </>
   );
