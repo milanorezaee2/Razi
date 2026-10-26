@@ -2816,19 +2816,16 @@ html[lang="fa"] .pf-hero-title span {
   }
 
   .mobile-category-list {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.7rem;
-    margin-inline: -1rem;
-    overflow-x: auto;
-    padding: 0.1rem 1rem 0.65rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    padding: 0.1rem 0 0.65rem;
   }
 
   .mobile-category-card {
     display: flex;
-    width: clamp(6.4rem, 28vw, 7.5rem);
-    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
     flex-direction: column;
     gap: 0.55rem;
     padding: 0.35rem;
@@ -2920,8 +2917,6 @@ html[lang="fa"] .pf-hero-title span {
      with 3px of air so the active dot's ring is never clipped. */
   .pattern-card__colorways {
     overflow: hidden;
-    padding: 3px;
-    margin: -3px;
   }
 
   .pattern-card__colorways > div,
@@ -2929,6 +2924,7 @@ html[lang="fa"] .pf-hero-title span {
     min-width: 0;
     overflow-x: auto;
     scrollbar-width: none;
+    padding: 3px;
   }
 
   .pattern-card__colorways > div::-webkit-scrollbar,
@@ -2938,8 +2934,6 @@ html[lang="fa"] .pf-hero-title span {
 
   .product-card__colors {
     overflow: hidden;
-    padding: 3px;
-    margin: -3px;
   }
 
   .pattern-card__colorways > div {
@@ -3140,9 +3134,10 @@ html[lang="fa"] .pf-hero-title span {
     font-size: 16px;
   }
 
-  /* Snap rails align to the page gutter and never chain-scroll the page. */
+  /* Framed snap rails: cards rest flush inside the section frame and
+     never chain-scroll the page. */
   .public-app-shell .scroll-snap-x {
-    scroll-padding-inline: 1rem;
+    scroll-padding-inline: 0;
     overscroll-behavior-x: contain;
   }
 

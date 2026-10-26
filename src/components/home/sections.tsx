@@ -323,7 +323,7 @@ export function ArtistsSection({ artists }: { artists: ArtistCardData[] }) {
       <SectionHeader eyebrow={dict.nav.artists} title={dict.home.artistsTitle} description={dict.home.artistsDesc} href={href(locale, "/artists")} hrefLabel={dict.nav.viewAll} />
       {/* Phones: one elegant swipe rail instead of four full-screen stacked cards. */}
       <Reveal className="mt-10 md:hidden">
-        <Carousel itemClassName="w-[76vw] xs:w-[68vw] sm:w-[380px]">
+        <Carousel itemClassName="w-full sm:w-[calc((100%-1rem)/2)]">
           {artists.slice(0, 4).map((a) => (
             <ArtistCard key={a.id} artist={a} />
           ))}
@@ -346,7 +346,7 @@ export function PortfoliosSection({ items, title, description, eyebrow, hrefPath
       <SectionHeader eyebrow={eyebrow} title={title} description={description} href={href(locale, hrefPath)} hrefLabel={dict.nav.viewAll} />
       {/* Phones: one cinematic swipe rail; the editorial bento is desktop-only. */}
       <Reveal className="mt-10 md:hidden">
-        <Carousel itemClassName="w-[78vw] xs:w-[70vw] sm:w-[350px]">
+        <Carousel itemClassName="w-full sm:w-[calc((100%-1rem)/2)]">
           {items.slice(0, 4).map((p, i) => (
             <div key={p.id} className="aspect-[4/3]">
               <PortfolioCard item={p} priority={i === 0} />
@@ -377,7 +377,7 @@ export function StylesSection({ categories, counts }: { categories: Category[]; 
         <SectionHeader eyebrow={dict.nav.styles} title={dict.home.stylesTitle} description={dict.home.stylesDesc} href={href(locale, "/styles")} hrefLabel={dict.nav.viewAll} />
         {/* Phones: swipeable style tiles instead of the desktop mosaic. */}
         <Reveal className="mt-10 md:hidden">
-          <Carousel itemClassName="w-[58vw] xs:w-[50vw] sm:w-[300px]">
+          <Carousel>
             {cats.map((c) => {
               const n = counts[c.id] ?? 0;
               return (
@@ -409,7 +409,7 @@ export function SpacesSection({ spaces }: { spaces: Space[] }) {
     <section className="container-x section-y">
       <SectionHeader eyebrow={dict.nav.spaces} title={dict.home.spacesTitle} description={dict.home.spacesDesc} href={href(locale, "/spaces")} hrefLabel={dict.nav.viewAll} />
       <Reveal className="mt-10">
-        <Carousel itemClassName="w-[48vw] xs:w-[40vw] sm:w-[32vw] md:w-[26vw] lg:w-[22vw] xl:w-[260px]">
+        <Carousel itemClassName="w-[calc((100%-0.875rem)/2)] sm:w-[calc((100%-1rem)/2)] md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)] xl:w-[calc((100%-4rem)/5)]">
           {spaces.map((s) => (
             <StyleCard key={s.id} href={href(locale, `/spaces/${s.slug}`)} title={t(s.name, locale)} image={s.image} className="aspect-[4/5]" />
           ))}
@@ -428,7 +428,7 @@ export function ExclusiveSection({ products, heroImage }: { products: ProductCar
       <div className="pointer-events-none absolute -top-40 end-[-10%] h-[520px] w-[520px] rounded-full bg-accent/20 blur-[140px]" />
       <div className="container-x section-y relative">
         <SectionHeader tone="inverse" eyebrow={dict.common.siteExclusive} title={dict.home.exclusiveTitle} description={dict.home.exclusiveDesc} href={href(locale, "/shop")} hrefLabel={dict.nav.viewAll} />
-        <div className="mt-10 grid gap-5 lg:grid-cols-2 lg:items-stretch">
+        <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-stretch">
           {/* hero image — decorative, full height */}
           <Reveal className="h-full lg:self-stretch">
             <div className="relative aspect-[16/10] overflow-hidden rounded-xl lg:aspect-auto lg:h-full">
@@ -442,7 +442,7 @@ export function ExclusiveSection({ products, heroImage }: { products: ProductCar
           </Reveal>
           {/* Phones: product rail under the banner */}
           <div className="md:hidden">
-            <Carousel itemClassName="w-[46vw] xs:w-[42vw]">
+            <Carousel>
               {products.slice(0, 4).map((p) => (
                 <div key={p.id} className="h-full overflow-hidden rounded-xl bg-white text-foreground dark:bg-surface">
                   <ProductCard product={p} />
@@ -476,7 +476,7 @@ export function EducationSection({ items }: { items: EducationCardData[] }) {
       <SectionHeader eyebrow={dict.nav.education} title={dict.home.educationTitle} description={dict.home.educationDesc} href={href(locale, "/academy")} hrefLabel={dict.nav.viewAll} />
       {/* Phones: swipe rail of the same courses as the desktop spread. */}
       <Reveal className="mt-8 md:hidden">
-        <Carousel itemClassName="w-[76vw] xs:w-[68vw] sm:w-[360px]">
+        <Carousel itemClassName="w-full sm:w-[calc((100%-1rem)/2)]">
           {items.slice(0, 5).map((e) => (
             <EducationCard key={e.id} item={e} />
           ))}
