@@ -73,18 +73,21 @@ function Panel({
     const r = anchor.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const w = Math.min(PANEL_W, vw - 16);
     const spaceRight = vw - r.right;
     const spaceLeft  = r.left;
-    const goRight = spaceRight >= PANEL_W + PANEL_GAP;
-    const goLeft  = spaceLeft  >= PANEL_W + PANEL_GAP;
+    const goRight = spaceRight >= w + PANEL_GAP;
+    const goLeft  = spaceLeft  >= w + PANEL_GAP;
     // prefer right; fall back left; if neither fits, overlap on the side with more space
-    const x = (goRight || (!goLeft && spaceRight >= spaceLeft))
+    const rawX = (goRight || (!goLeft && spaceRight >= spaceLeft))
       ? r.right + PANEL_GAP
-      : r.left  - PANEL_W - PANEL_GAP;
+      : r.left  - w - PANEL_GAP;
+    // never let the panel leave the viewport (narrow screens included)
+    const x = Math.max(8, Math.min(rawX, vw - w - 8));
     const rawY  = r.top;
     const maxY  = vh - 580;
     const y     = Math.max(8, Math.min(rawY, maxY));
-    return { x, y };
+    return { x, y, w };
   }
 
   /* set initial fixed position before first paint */
@@ -158,7 +161,7 @@ function Panel({
           position: "fixed",
           left: pos.x,
           top:  pos.y,
-          width: PANEL_W,
+          width: pos.w,
           zIndex: 85,
           animation: "ra-hc-panel 320ms var(--ease-out) both",
         }}
@@ -187,7 +190,7 @@ function Panel({
           <button
             onClick={onClose}
             aria-label="close"
-            className="absolute top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full glass text-foreground hover:bg-surface transition-colors inset-inline-end-3"
+            className="absolute top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full glass text-foreground hover:bg-surface transition-colors end-3"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -249,7 +252,7 @@ function ProductPanel({
         {/* colour thumbnails */}
         {colors.length > 1 && (
           <div
-            className="absolute bottom-3 inset-inline-start-3 flex gap-1.5"
+            className="absolute bottom-3 start-3 flex gap-1.5"
             style={{ animation: "ra-hc-stagger 380ms 280ms var(--ease-out) both" }}
           >
             {colors.slice(0, 5).map((c) => (
@@ -270,7 +273,7 @@ function ProductPanel({
 
         {/* badges */}
         <div
-          className="absolute top-3 inset-inline-start-3 flex flex-wrap gap-1"
+          className="absolute top-3 start-3 flex flex-wrap gap-1"
           style={{ animation: "ra-hc-stagger 380ms 60ms var(--ease-out) both" }}
         >
           {!p.artistId ? <Badge tone="accent">{dict.common.siteExclusive}</Badge> : <Badge tone="blue">{dict.common.artistProduct}</Badge>}
@@ -400,7 +403,7 @@ function PatternPanel({
         {/* colourway mini-previews like Spoonflower */}
         {colorways.length > 1 && (
           <div
-            className="absolute bottom-3 inset-inline-start-3 flex gap-1.5"
+            className="absolute bottom-3 start-3 flex gap-1.5"
             style={{ animation: "ra-hc-stagger 380ms 280ms var(--ease-out) both" }}
             onClick={(e) => e.preventDefault()}
           >
@@ -427,7 +430,7 @@ function PatternPanel({
         )}
 
         <div
-          className="absolute top-3 inset-inline-start-3 flex flex-wrap gap-1"
+          className="absolute top-3 start-3 flex flex-wrap gap-1"
           style={{ animation: "ra-hc-stagger 380ms 60ms var(--ease-out) both" }}
         >
           {p.isNew      && <Badge tone="glass">{dict.common.new}</Badge>}
@@ -501,6 +504,15 @@ function PatternPanel({
 /* ════════════════════════════════════════════════════════════════
    PUBLIC HOOK
 ════════════════════════════════════════════════════════════════ */
+/** The cinematic panel is a fine-pointer experience. On touch devices a tap
+ *  must navigate, never trap the visitor in a floating preview. */
+function canHoverPreview(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches
+  );
+}
+
 export function useHoverCard(item: HoverItem) {
   const [state, setState] = useState<HoverState | null>(null);
   const anchorRef         = useRef<HTMLElement | null>(null);
@@ -524,6 +536,7 @@ export function useHoverCard(item: HoverItem) {
   /** open immediately — used by click */
   const open = useCallback(
     (el: HTMLElement) => {
+      if (!canHoverPreview()) return;
       cancelShow();
       cancelHide();
       anchorRef.current = el;
@@ -535,6 +548,7 @@ export function useHoverCard(item: HoverItem) {
 
   const onMouseEnter = useCallback(
     (e: React.MouseEvent<HTMLElement>) => {
+      if (!canHoverPreview()) return;
       cancelShow();
       cancelHide();
       const el = e.currentTarget;
@@ -561,6 +575,8 @@ export function useHoverCard(item: HoverItem) {
       if (target.closest("a, button")) return;
       // panel already open — do nothing extra
       if (state) return;
+      // touch devices: never swallow the tap for a preview that cannot open
+      if (!canHoverPreview()) return;
       e.preventDefault();
       open(e.currentTarget);
     },

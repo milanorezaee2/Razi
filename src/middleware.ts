@@ -25,6 +25,17 @@ export async function middleware(req: NextRequest) {
   // Next.js reads the forwarded CSP nonce and attaches it to its streamed RSC and hydration scripts.
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-nonce", nonce);
+  // The root layout sits above the [locale] segment and receives no params,
+  // so forward the locale for correct <html lang/dir> per locale.
+  const firstSeg = pathname.split("/").filter(Boolean);
+  const pathLocale =
+    firstSeg[0] === "admin"
+      ? firstSeg[1]
+      : firstSeg[0];
+  requestHeaders.set(
+    "x-locale",
+    LOCALES.includes(pathLocale as never) ? (pathLocale as string) : DEFAULT_LOCALE,
+  );
   requestHeaders.set("Content-Security-Policy", createContentSecurityPolicy(req, nonce));
   let res = NextResponse.next({ request: { headers: requestHeaders } });
   res = applySecurityHeaders(req, res, nonce);

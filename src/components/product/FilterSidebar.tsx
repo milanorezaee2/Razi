@@ -231,7 +231,7 @@ export function FilterSidebar({
 
       {/* ── Mobile trigger bar ── */}
       <div className="lg:hidden">
-        <div className="sticky top-[var(--header-h-compact)] z-30 -mx-4 border-y border-border bg-background/90 px-4 py-3 backdrop-blur-md">
+        <div className="sticky top-[calc(var(--announce-h,0px)+3.75rem)] z-30 -mx-4 border-y border-border bg-background/90 px-4 py-3 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -295,7 +295,7 @@ export function FilterSidebar({
           />
           <div
             className={cn(
-              "absolute inset-y-0 flex w-[min(100%,22rem)] flex-col bg-surface shadow-elevated",
+              "absolute inset-y-0 flex w-[min(100%,22rem)] flex-col bg-surface pb-[env(safe-area-inset-bottom)] shadow-elevated",
               "anim-fade-up",
               fa ? "start-0" : "start-0",
             )}

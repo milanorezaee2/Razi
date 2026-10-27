@@ -43,14 +43,20 @@ export function PatternCard({ pattern, variant = "default", priority, className 
     <>
       <SpotlightCard as="article" onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} className={cn("pattern-card group relative flex min-w-0 flex-col rounded-lg", className)}>
         <Link href={url} className="relative block overflow-hidden rounded-lg bg-background-secondary" aria-label={t(pattern.title, locale)}>
-          <div className={cn("pattern-card__media relative w-full", variant === "large" && "pattern-card__media--large", ratio)}>
+          <div className={cn("pattern-card__media relative w-full", variant === "large" && "pattern-card__media--large", variant === "wide" && "pattern-card__media--wide", ratio)}>
             <Image
               key={displayImage}
               src={displayImage}
               alt={`${t(pattern.title, locale)} — ${t(activeCw.name, locale)}`}
               fill
               priority={priority}
-              sizes={variant === "large" ? "(max-width:768px) 180vw, 50vw" : "(max-width:640px) 90vw, (max-width:1024px) 33vw, 25vw"}
+              sizes={
+                variant === "large" || variant === "wide"
+                  ? "(max-width:767px) 92vw, (max-width:1024px) 66vw, 50vw"
+                  : variant === "compact"
+                    ? "(max-width:767px) 46vw, (max-width:1024px) 25vw, 20vw"
+                    : "(max-width:767px) 62vw, (max-width:1024px) 33vw, 25vw"
+              }
               className="img-zoom object-cover anim-scale-fade"
             />
           </div>
@@ -126,7 +132,7 @@ export function PatternCard({ pattern, variant = "default", priority, className 
                 max={variant === "compact" ? 4 : 6}
                 locale={locale}
               />
-              <span className="truncate text-caption text-muted">
+              <span className="min-w-0 truncate text-caption text-muted">
                 {t(activeCw.name, locale)}
               </span>
             </div>

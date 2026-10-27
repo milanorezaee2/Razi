@@ -79,7 +79,7 @@ export function PortfolioHero({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#101a17] via-[#101a17]/15 to-[#101a17]/40" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#101a17]/25 to-[#101a17]/60 rtl:bg-gradient-to-l" />
 
-      <div className="container-x relative pb-6 pt-[calc(var(--announce-h,0px)+var(--header-h)+1.5rem)] md:pb-8 md:pt-[calc(var(--announce-h,0px)+var(--header-h)+2rem)]">
+      <div className="container-x relative pb-6 pt-[calc(var(--announce-h,0px)+var(--header-h-mobile)+1.25rem)] md:pb-8 md:pt-[calc(var(--announce-h,0px)+var(--header-h)+2rem)]">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/15 pb-5">
           <Breadcrumb
             locale={locale}
@@ -97,20 +97,20 @@ export function PortfolioHero({
           </span>
         </div>
 
-        <div className="grid items-center gap-10 py-10 md:gap-12 md:py-14 lg:min-h-[640px] lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+        <div className="grid items-center gap-7 py-6 md:gap-12 md:py-14 lg:min-h-[640px] lg:grid-cols-[1.1fr_1fr] lg:gap-16">
           {/* ── ستون متن ── */}
           <div>
             <p className="flex items-center gap-3 text-xs font-medium text-[#d6bc8e]">
               <span className="h-px w-9 bg-[#d6bc8e]/70" />
               {eyebrow}
             </p>
-            <h1 className="pf-hero-title mt-6 font-display text-[clamp(2.8rem,5.2vw,5.2rem)] leading-[1.3] tracking-tight whitespace-nowrap">
+            <h1 className="pf-hero-title mt-4 font-display text-[clamp(2.1rem,8.6vw,5.2rem)] leading-[1.25] tracking-tight md:mt-6 md:text-[clamp(2.8rem,5.2vw,5.2rem)] md:leading-[1.3] md:whitespace-nowrap">
               <span>{titleLine1}</span>{" "}<span className="text-[#e4cba4]">{titleLine2}</span>
             </h1>
-            <p className="mt-6 max-w-lg text-sm leading-8 text-white/70 md:text-base md:leading-8">
+            <p className="mt-4 max-w-lg text-sm leading-8 text-white/70 md:mt-6 md:text-base md:leading-8">
               {desc}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-6 grid grid-cols-2 items-center gap-2.5 sm:flex sm:flex-wrap sm:gap-3 md:mt-8">
               <a
                 href="#works"
                 className="inline-flex min-h-12 items-center justify-center gap-4 rounded-full bg-[#e4cba4] px-6 text-sm font-medium text-[#17201b] transition-colors hover:bg-[#f0ddbd] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
@@ -126,7 +126,7 @@ export function PortfolioHero({
                 <ArrowDown className="h-3.5 w-3.5" aria-hidden />
               </a>
             </div>
-            <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-white/50">
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-white/50 md:mt-9 md:gap-x-5">
               <span>{fa ? "طراحی پترن" : "Pattern design"}</span>
               <span className="h-1 w-1 rounded-full bg-[#d6bc8e]/60" aria-hidden />
               <span>{fa ? "پارچه و کاغذدیواری" : "Textile & wallpaper"}</span>

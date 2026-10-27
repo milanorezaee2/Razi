@@ -78,7 +78,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
   const makerOf = (p: EnrichedProduct) => (p.artist ? t(p.artist.name, locale) : brand);
 
   return (
-    <div className="grid gap-3 lg:grid-cols-12 lg:gap-4">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-4">
       {/* ── 1 · the boutique panel ─────────────────────────────────────────── */}
       <article className="relative isolate flex flex-col overflow-hidden rounded-xl bg-[#0d1117] p-5 text-white sm:p-8 md:p-10 lg:col-span-5">
         <span aria-hidden className="pointer-events-none absolute -end-20 -top-24 h-56 w-56 rounded-full bg-accent/25 blur-3xl" />
@@ -108,13 +108,13 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {/* live numbers from the catalogue — anchored to the panel's foot */}
         <div className="mt-7 flex flex-1 flex-col justify-end sm:mt-10">
           <div
-            className="shop-hero__stats anim-fade-up grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4"
+            className="shop-hero__stats anim-fade-up grid grid-cols-4 gap-x-3 gap-y-4 border-t border-white/15 pt-5 sm:gap-x-6 sm:pt-6 lg:grid-cols-2 xl:grid-cols-4"
             style={{ animationDelay: "280ms" }}
           >
             {stats.map((stat) => (
               <div key={stat.label}>
-                <p className="font-display text-h3 tabular leading-none text-white">{stat.value}</p>
-                <p className="mt-1.5 text-caption text-white/55">{stat.label}</p>
+                <p className="font-display text-[19px] tabular leading-none text-white sm:text-h3">{stat.value}</p>
+                <p className="mt-1.5 text-[11px] leading-snug text-white/55 sm:text-caption">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -126,7 +126,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {lead && (
           <Link
             href={href(locale, `/shop/${lead.slug}`)}
-            className="group relative row-span-2 min-h-[260px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[440px]"
+            className="group relative aspect-[16/11] overflow-hidden rounded-xl bg-background-secondary sm:row-span-2 sm:aspect-auto sm:min-h-[440px]"
           >
             <Image
               src={getProductColor(lead).image}
@@ -163,7 +163,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
         {second && (
           <Link
             href={href(locale, `/shop/${second.slug}`)}
-            className="group relative min-h-[160px] overflow-hidden rounded-xl bg-background-secondary sm:min-h-[200px]"
+            className="group relative aspect-[16/9] overflow-hidden rounded-xl bg-background-secondary sm:aspect-auto sm:min-h-[200px]"
           >
             <Image
               src={getProductColor(second).image}
@@ -185,7 +185,7 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
 
         {/* the lead piece's colourways — the shop's colour story, at a glance */}
         {lead && leadColours.length > 1 && (
-          <div className="flex flex-col rounded-xl border border-border bg-surface p-5">
+          <div className="flex flex-col rounded-xl border border-border bg-surface p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-label flex items-center gap-2 text-accent">
                 <Layers className="h-3.5 w-3.5" />
@@ -218,11 +218,11 @@ export function ShopHero({ locale, eyebrow, title, description, products, famili
       </div>
 
       {/* ── 3 · the family rail + the service note ─────────────────────────── */}
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-background-secondary px-5 py-4 lg:col-span-12 lg:flex-row lg:items-center lg:justify-between">
-        <ul className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-col gap-4 rounded-xl border border-border bg-background-secondary px-5 py-4 lg:col-span-12 lg:flex-row lg:items-center lg:justify-between">
+        <ul className="-mx-5 flex items-center gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mx-0 lg:flex-wrap lg:px-0">
           <li className="me-1 text-caption text-muted">{labels.browseFamily}</li>
           {families.map((family) => (
-            <li key={family.id}>
+            <li key={family.id} className="shrink-0">
               <Link
                 href={`${href(locale, "/shop")}?family=${family.id}`}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-caption text-foreground-secondary transition-colors hover:border-foreground hover:text-foreground"

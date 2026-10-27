@@ -12,6 +12,7 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Reveal } from "@/components/ui/Reveal";
 import { CourseProgressSidebar } from "@/components/academy/CourseProgressSidebar";
 import { EnrollForm } from "@/components/academy/EnrollForm";
+import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { VideoGrid, type AcademyVideoEntry } from "@/components/academy/VideoGrid";
 import { academyOverview } from "@/lib/data/academy";
 import { isPublishedEducation, publicEducationItems } from "@/lib/academy/publication";
@@ -182,7 +183,7 @@ export default async function EducationDetail({ params }: Props) {
       />
 
       {/* Hero */}
-      <section className="relative isolate h-[70svh] min-h-[480px] overflow-hidden bg-[#0d1117] text-white">
+      <section className="relative isolate h-[58svh] min-h-[400px] overflow-hidden bg-[#0d1117] text-white md:h-[70svh] md:min-h-[480px]">
         <Image src={e.image} alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d13]/95 via-[#0a0d13]/40 to-[#0a0d13]/30" />
         <div className="container-x relative flex h-full flex-col justify-end pb-12 pt-[calc(var(--announce-h,0px)+var(--header-h))]">
@@ -280,7 +281,7 @@ export default async function EducationDetail({ params }: Props) {
               )}
 
               {/* Real registration — stored in the academy panel */}
-              <div id="enroll">
+              <div id="enroll" className="scroll-mt-28">
                 <EnrollForm
                   item={{
                     slug: e.slug,
@@ -292,6 +293,25 @@ export default async function EducationDetail({ params }: Props) {
                   compact
                 />
               </div>
+
+              {/* Mobile sticky enroll bar (jumps to the form above) */}
+              <StickyBuyBar
+                watchId="enroll"
+                revealAfter={480}
+                caption={t(e.title, locale)}
+                price={isFreePrice(e.price) ? (locale === "fa" ? "رایگان" : "Free") : formatPrice(e.price!, locale)}
+              >
+                <a
+                  href="#enroll"
+                  className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-transform duration-200 active:scale-[0.98]"
+                >
+                  {e.type === "course"
+                    ? isFreePrice(e.price)
+                      ? locale === "fa" ? "شروع رایگان دوره" : "Start free"
+                      : locale === "fa" ? "ثبت‌نام در دوره" : "Enroll in course"
+                    : locale === "fa" ? "رزرو صندلی" : "Reserve a seat"}
+                </a>
+              </StickyBuyBar>
 
               {stats?.capacity ? (
                 <p className="text-caption text-foreground-secondary tabular">
@@ -404,7 +424,7 @@ export default async function EducationDetail({ params }: Props) {
       {related.length > 0 && (
         <section className="container-x section-y">
           <SectionHeader eyebrow={d.nav.education} title={d.common.relatedTutorials} href={href(locale, "/academy")} hrefLabel={d.nav.viewAll} />
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((x, i) => <Reveal key={x.id} delay={i * 70}><EducationCard item={x} /></Reveal>)}
           </div>
         </section>

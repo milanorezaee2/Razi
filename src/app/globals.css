@@ -204,6 +204,7 @@
     font-size: 15px;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
   }
   body {
     background: var(--background);
@@ -2411,7 +2412,7 @@ html[lang="fa"] .pf-hero-title span {
   }
 
   .site-footer__brand-card {
-    min-height: 17rem;
+    min-height: 0;
   }
 
   .site-footer__social-area {
@@ -2443,6 +2444,12 @@ html[lang="fa"] .pf-hero-title span {
   .site-footer__control {
     transition: none;
   }
+}
+
+/* Home flow: wrappers are display:contents on desktop (identical layout);
+   on phones the flow becomes a curated app-like column. */
+.home-flow__item {
+  display: contents;
 }
 
 /* ========================================================================
@@ -2479,6 +2486,21 @@ html[lang="fa"] .pf-hero-title span {
 
   .public-app-shell .site-footer__inner {
     padding-top: 2.25rem;
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Footer showcase cards: tighter on phones */
+  .public-app-shell .site-footer__brand-card {
+    padding: 1.15rem 1.2rem;
+  }
+
+  .public-app-shell .site-footer__card {
+    padding: 1.15rem 1.2rem;
+  }
+
+  .public-app-shell .site-footer__showcase,
+  .public-app-shell .site-footer__feature-grid {
+    gap: 0.85rem;
   }
 
   .public-app-shell .site-footer__directories {
@@ -2794,19 +2816,16 @@ html[lang="fa"] .pf-hero-title span {
   }
 
   .mobile-category-list {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.7rem;
-    margin-inline: -1rem;
-    overflow-x: auto;
-    padding: 0.1rem 1rem 0.65rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    padding: 0.1rem 0 0.65rem;
   }
 
   .mobile-category-card {
     display: flex;
-    width: clamp(6.4rem, 28vw, 7.5rem);
-    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
     flex-direction: column;
     gap: 0.55rem;
     padding: 0.35rem;
@@ -2874,13 +2893,126 @@ html[lang="fa"] .pf-hero-title span {
     white-space: nowrap;
   }
 
-  .pattern-card__media--large {
+  /* Mobile-native card media: square thumbs in grids & rails (app-style),
+     a cinematic 4/3 for the lead feature, 16/10 kept for wide features. */
+  .pattern-card__media {
     aspect-ratio: 1 / 1 !important;
   }
 
+  .pattern-card__media--large {
+    aspect-ratio: 4 / 3 !important;
+  }
+
+  .pattern-card__media--wide {
+    aspect-ratio: 16 / 10 !important;
+  }
+
+  /* Card bodies get real inset padding on phones (text no longer flush
+     with the card edge; swatch rings are never clipped). */
+  .pattern-card__info {
+    padding: 0.8rem 0.9rem 0.95rem;
+  }
+
+  /* Narrow rail cards: colourway dots never spill past the card edge,
+     with 3px of air so the active dot's ring is never clipped. */
+  .pattern-card__colorways {
+    overflow: hidden;
+  }
+
+  .pattern-card__colorways > div,
+  .product-card__colors > div {
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 3px;
+  }
+
+  .pattern-card__colorways > div::-webkit-scrollbar,
+  .product-card__colors > div::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-card__colors {
+    overflow: hidden;
+  }
+
+  .pattern-card__colorways > div {
+    min-width: 0;
+  }
+
+  /* Section headers — true app pattern on phones: eyebrow + title at the
+     start, the "view all" link as a pill on the same row, short copy. */
+  .public-app-shell .section-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 0.9rem;
+  }
+
+  .public-app-shell .section-header.text-center {
+    display: flex;
+  }
+
+  .section-header > div {
+    min-width: 0;
+  }
+
+  .section-header h2 {
+    font-size: clamp(1.45rem, 6.4vw, 1.95rem);
+    line-height: 1.3;
+  }
+
+  .section-header .text-label {
+    margin-bottom: 0.55rem;
+  }
+
+  .section-header__desc {
+    margin-top: 0.55rem;
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .section-header > a {
+    border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+    border-radius: 999px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Artist cards — compact profile banners on phones (no long bios) */
+  .artist-card__cover {
+    aspect-ratio: 2 / 1;
+  }
+
+  .artist-card__avatar {
+    height: 3.25rem;
+    width: 3.25rem;
+    border-width: 2px;
+  }
+
+  .artist-card__body {
+    padding: 1rem 1.1rem 1.15rem;
+  }
+
+  .artist-card__bio {
+    margin-top: 0.5rem;
+    min-height: 0;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  .artist-card__profession {
+    min-height: 0;
+  }
+
+  /* Detail gallery: the stage owns the full content width on phones
+     (the previous 20rem cap boxed product imagery into the centre). */
   .mobile-gallery-stage {
-    width: min(100%, 20rem);
+    width: 100%;
     margin-inline: auto;
+    border-radius: 1rem;
   }
 
   .product-grid {
@@ -2954,9 +3086,18 @@ html[lang="fa"] .pf-hero-title span {
   }
 
   .product-card__metadata,
-  .product-card__specs,
   .pattern-card__metadata {
-    display: none !important;
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.15rem;
+    font-size: 0.62rem;
+    line-height: 1.5;
+  }
+
+  .product-card__specs {
+    display: grid;
+    font-size: 0.6rem;
+    line-height: 1.5;
   }
 
   .product-card__colors,
@@ -2966,20 +3107,96 @@ html[lang="fa"] .pf-hero-title span {
     padding-top: 0.2rem;
   }
 
-  .product-card__colors > span:last-child,
-  .pattern-card__colorways > span:last-child {
-    display: none;
-  }
 
   .site-footer__contact-row {
     align-items: flex-start;
   }
+
+  /* ── Luxury mobile polish ─────────────────────────────────────────────
+     Media containment, touch ergonomics and rail behaviour. These rules
+     guarantee every image/video stays inside the phone frame. */
+  .public-app-shell img,
+  .public-app-shell video,
+  .public-app-shell iframe {
+    max-width: 100%;
+  }
+
+  .public-app-shell a,
+  .public-app-shell button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* iOS Safari auto-zooms into fields smaller than 16px; keep forms calm. */
+  .public-app-shell input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .public-app-shell select,
+  .public-app-shell textarea {
+    font-size: 16px;
+  }
+
+  /* Framed snap rails: cards rest flush inside the section frame and
+     never chain-scroll the page. */
+  .public-app-shell .scroll-snap-x {
+    scroll-padding-inline: 0;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Edge-to-edge bleed rails (categories, carousels) keep the first and
+     last card inside the safe frame. */
+  .mobile-category-list {
+    scroll-padding-inline: 1rem;
+    overscroll-behavior-x: contain;
+  }
+
+  /* Editorial imagery gets a consistent, premium corner on phones. */
+  .public-app-shell .pattern-card > a,
+  .public-app-shell .product-card > a {
+    border-radius: 0.9rem;
+  }
+
+  /* Curated mobile home flow: wayfinding (categories) right after the hero,
+     everything else keeps the editor's relative order. */
+  .home-flow {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .home-flow__item {
+    display: block;
+    order: 7;
+    min-width: 0;
+  }
+
+  .home-flow__item[data-home-section="hero"] {
+    order: 0;
+  }
+
+  .home-flow__item[data-home-section="categories"] {
+    order: 1;
+  }
+
+  .home-flow__item[data-home-section="bestSellers"] {
+    order: 2;
+  }
+
+  .home-flow__item[data-home-section="trending"] {
+    order: 3;
+  }
+
+  .home-flow__item[data-home-section="discovery"] {
+    order: 4;
+  }
+
+  .home-flow__item[data-home-section="exclusive"] {
+    order: 5;
+  }
+
+  .home-flow__item[data-home-section="newPatterns"] {
+    order: 6;
+  }
 }
 
 @media (max-width: 370px) {
-  .shop-hero__stats {
-    display: none !important;
-  }
 
   .mobile-hero__actions {
     grid-template-columns: 1fr;
@@ -2998,10 +3215,31 @@ html[lang="fa"] .pf-hero-title span {
   }
 }
 
+/* Phase 6: detail-page sticky buy bar clearance + iOS input zoom guard. */
+@media (max-width: 1023.98px) {
+  body:has(.sticky-buybar) .public-app-shell {
+    padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
+  }
+
+  body:has(.sticky-buybar) .mobile-support {
+    bottom: calc(5.35rem + env(safe-area-inset-bottom));
+  }
+
+  .public-app-shell input,
+  .public-app-shell select,
+  .public-app-shell textarea {
+    font-size: 16px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mobile-tabbar__item,
   .mobile-tabbar__icon,
   .mobile-category-card {
+    transition: none;
+  }
+
+  .sticky-buybar {
     transition: none;
   }
 }

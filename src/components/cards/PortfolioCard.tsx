@@ -66,7 +66,7 @@ export function PortfolioCard({
       onMouseMove={handleMove}
       onMouseLeave={handleLeave}
       className={cn(
-        "group relative block h-full min-h-[280px] overflow-hidden rounded-lg bg-background-secondary",
+        "group relative block h-full min-h-0 overflow-hidden rounded-lg bg-background-secondary md:min-h-[280px]",
         "[perspective:900px]",
         className,
       )}
@@ -81,19 +81,19 @@ export function PortfolioCard({
         <span ref={shineRef} aria-hidden className="absolute inset-0 rounded-lg" style={{ opacity: 0, transition: "opacity 200ms ease, background 60ms linear", pointerEvents: "none" }} />
       </span>
 
-      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-5 text-white/80">
+      <div className="absolute inset-x-0 top-0 flex items-center justify-between p-3.5 text-white/80 sm:p-5">
         <span className="text-label text-white/70">{item.category ? t(item.category.name, locale) : ""}</span>
         <span className="text-caption tabular">{locale === "fa" ? faNum(item.year) : item.year}</span>
       </div>
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-5 md:p-6">
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-3.5 sm:gap-4 sm:p-5 md:p-6">
         <div className="min-w-0 text-white" style={{ textShadow: "0 1px 8px rgba(0,0,0,.45)" }}>
           <p className="text-caption text-white/70">
             {item.artist ? t(item.artist.name, locale) : dict.brand} · {t(item.location, locale)}
           </p>
-          <h3 className="mt-1 font-display text-h3 leading-tight text-balance">{t(item.title, locale)}</h3>
-          <p className="mt-1 line-clamp-1 text-body-sm text-white/75">{t(item.subtitle, locale)}</p>
+          <h3 className="mt-1 font-display text-[19px] leading-tight text-balance sm:text-h3">{t(item.title, locale)}</h3>
+          <p className="mt-1 hidden line-clamp-1 text-body-sm text-white/75 sm:block">{t(item.subtitle, locale)}</p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full glass text-white/90 transition-transform duration-300 group-hover:scale-105">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full glass text-white/90 transition-transform duration-300 group-hover:scale-105 sm:h-10 sm:w-10">
           <ArrowUpRight className="h-4 w-4 rtl-flip arrow-shift" />
         </span>
       </div>

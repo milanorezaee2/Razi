@@ -159,6 +159,16 @@ function useLocalState<T>(key: string, initial: T): [T, (v: T | ((p: T) => T)) =
 }
 
 export function AppProviders({ locale, children }: { locale: Locale; children: React.ReactNode }) {
+  // Keep <html lang/dir> in sync with the active locale (the root layout
+  // cannot see the [locale] param; middleware forwards it per request, and
+  // this guards any statically prerendered shell).
+  useEffect(() => {
+    const el = document.documentElement;
+    const dir = locale === "fa" ? "rtl" : "ltr";
+    if (el.lang !== locale) el.lang = locale;
+    if (el.dir !== dir) el.dir = dir;
+  }, [locale]);
+
   const localeValue = useMemo<LocaleCtx>(
     () => ({ locale, dir: locale === "fa" ? "rtl" : "ltr", dict: dictionaries[locale] }),
     [locale],

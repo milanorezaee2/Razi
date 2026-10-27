@@ -242,7 +242,7 @@ export function Header({ nav }: { nav: NavData }) {
 
             <button type="button" onClick={openCart} aria-label={dict.nav.cart} className={cn("relative flex h-10 w-10 items-center justify-center rounded-md transition-colors", transparent ? "text-white hover:bg-white/10" : "text-foreground hover:bg-background-secondary")}>
               <ShoppingBag className="h-[18px] w-[18px]" />
-              {count > 0 && <span className="absolute top-1.5 inset-inline-end-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white tabular anim-scale-fade">{count}</span>}
+              {count > 0 && <span className="absolute top-1.5 end-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white tabular anim-scale-fade">{count}</span>}
             </button>
 
             <Link href={href(locale, "/creators/join")} className={cn("hidden lg:inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold transition-[background-color,transform] hover:-translate-y-px ms-1", transparent ? "bg-white text-foreground hover:bg-white/90" : "bg-foreground text-background hover:bg-primary")}>
@@ -284,7 +284,7 @@ function MobileMenu({ open, onClose, nav, links, switchHref, otherLocale }: { op
   return (
     <div className={cn("fixed inset-0 z-[65] lg:hidden transition-opacity duration-300", open ? "opacity-100" : "pointer-events-none opacity-0")} aria-hidden={!open}>
       <div className="absolute inset-0 bg-background pt-[calc(var(--announce-h,0px)+var(--header-h))] overflow-y-auto">
-        <div className="container-x pb-12 pt-4">
+        <div className="container-x pb-[max(3rem,env(safe-area-inset-bottom))] pt-4">
           <nav className="flex flex-col">
             {links.map((l, i) => (
               <Link key={l.key} href={l.href} onClick={onClose} className="flex items-center justify-between border-b border-border py-4 font-display text-h2 text-foreground anim-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
@@ -298,7 +298,7 @@ function MobileMenu({ open, onClose, nav, links, switchHref, otherLocale }: { op
               <Link key={c.slug} href={href(locale, `/patterns?category=${c.slug}`)} onClick={onClose} className="relative aspect-[4/3] overflow-hidden rounded-md">
                 <Image src={c.image} alt="" fill sizes="50vw" className="object-cover" />
                 <span className="absolute inset-0 bg-black/35" />
-                <span className="absolute bottom-3 inset-inline-start-3 font-display text-h4 text-white">{t(c.name, locale)}</span>
+                <span className="absolute bottom-3 start-3 font-display text-h4 text-white">{t(c.name, locale)}</span>
               </Link>
             ))}
           </div>

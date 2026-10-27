@@ -20,8 +20,8 @@ export default async function CollectionsPage({ params }: { params: Promise<{ lo
   return (
     <>
       <PageHero eyebrow={d.nav.collections} title={d.nav.collections} description={locale === "fa" ? "گزیده‌هایی ویراسته از پترن‌ها و محصولات، حول یک حال‌وهوا." : "Curated selections of patterns and products, around a single mood."} />
-      <div className="container-x grid gap-5 pb-20 md:grid-cols-3">
-        {site.collections.map((c, i) => <StyleCard key={c.id} href={href(locale, `/collections/${c.slug}`)} title={t(c.title, locale)} description={t(c.description, locale)} image={c.cover} className={i === 0 ? "aspect-[4/5] md:col-span-2 md:aspect-[16/9]" : "aspect-[4/5]"} big={i === 0} />)}
+      <div className="container-x grid grid-cols-2 gap-3.5 pb-20 sm:gap-5 md:grid-cols-3">
+        {site.collections.map((c, i) => <StyleCard key={c.id} href={href(locale, `/collections/${c.slug}`)} title={t(c.title, locale)} description={t(c.description, locale)} image={c.cover} className={i === 0 ? "col-span-2 aspect-[16/9] md:col-span-2" : "aspect-[4/5]"} big={i === 0} />)}
       </div>
     </>
   );

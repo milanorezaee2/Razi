@@ -768,7 +768,7 @@ export function FinancialManager({ data, update, onSave }: FinancialManagerProps
             </div>
 
             <div className="relative w-full sm:w-64">
-              <Search className="absolute inset-inline-start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
               <input
                 type="text"
                 value={artistSearch}
@@ -925,7 +925,7 @@ export function FinancialManager({ data, update, onSave }: FinancialManagerProps
 
               {/* Search */}
               <div className="relative w-full sm:w-56">
-                <Search className="absolute inset-inline-start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
                 <input
                   type="text"
                   value={catalogSearch}

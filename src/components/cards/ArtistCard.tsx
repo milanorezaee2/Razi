@@ -36,13 +36,13 @@ export function ArtistCard({
         aria-label={fa ? `مشاهده پروفایل ${name}` : `View ${name}'s profile`}
         className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[box-shadow,border-color] duration-300 hover:border-accent/40 hover:shadow-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
       >
-        <div className="relative aspect-[16/10] overflow-hidden bg-background-secondary">
+        <div className="artist-card__cover relative aspect-[16/10] overflow-hidden bg-background-secondary">
           {artist.cover && (
             <Image
               src={artist.cover}
               alt=""
               fill
-              sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+              sizes="(max-width: 767px) 84vw, (max-width: 1023px) 50vw, 33vw"
               className="object-cover transition-transform duration-700 motion-safe:group-hover:scale-105"
             />
           )}
@@ -77,7 +77,7 @@ export function ArtistCard({
                   : "No preview yet"}
             </p>
           </div>
-          <div className="absolute bottom-4 start-4 h-16 w-16 overflow-hidden rounded-full border-[3px] border-white bg-background-secondary shadow-md">
+          <div className="artist-card__avatar absolute bottom-4 start-4 h-16 w-16 overflow-hidden rounded-full border-[3px] border-white bg-background-secondary shadow-md">
             {artist.avatar ? (
               <Image
                 src={artist.avatar}
@@ -91,11 +91,11 @@ export function ArtistCard({
             )}
           </div>
         </div>
-        <div className="flex flex-1 flex-col p-5 sm:p-6">
+        <div className="artist-card__body flex flex-1 flex-col p-5 sm:p-6">
           <h3 className="line-clamp-1 font-display text-xl font-semibold text-foreground transition-colors group-hover:text-accent">
             {name}
           </h3>
-          <p className="mt-1 line-clamp-2 min-h-10 text-sm leading-5 text-accent">
+          <p className="artist-card__profession mt-1 line-clamp-2 min-h-10 text-sm leading-5 text-accent">
             {t(artist.profession, locale) ||
               (fa ? "هنرمند مستقل" : "Independent artist")}
           </p>
@@ -105,7 +105,7 @@ export function ArtistCard({
               {location || (fa ? "موقعیت ثبت نشده" : "Location not listed")}
             </span>
           </p>
-          <p className="mt-3 line-clamp-2 min-h-12 text-sm leading-6 text-foreground-secondary">
+          <p className="artist-card__bio mt-3 line-clamp-2 min-h-12 text-sm leading-6 text-foreground-secondary">
             {t(artist.bio, locale) ||
               (fa
                 ? "آثار و اطلاعات این هنرمند را در صفحهٔ اختصاصی او ببینید."

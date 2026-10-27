@@ -194,7 +194,7 @@ export function MarketplaceCatalog({ locale, initial }: Props) {
           </Link>
         </div>
       ) : (
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 grid gap-4 xs:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {assets.map((asset) => (
             <article key={asset.id} className="group overflow-hidden rounded-xl border border-border bg-background">
               <Link href={href(locale, `/marketplace/${asset.slug}`)} className="relative block aspect-4/3 overflow-hidden bg-background-secondary">
@@ -203,7 +203,7 @@ export function MarketplaceCatalog({ locale, initial }: Props) {
                     src={`/api/marketplace/media?key=${encodeURIComponent(asset.media.preview)}`}
                     alt={t(asset.title, locale)}
                     fill
-                    sizes="(max-width:768px) 100vw, 25vw"
+                    sizes="(max-width:480px) 92vw, (max-width:1024px) 46vw, 25vw"
                     className="object-cover transition duration-500 group-hover:scale-105"
                   />
                 ) : (
