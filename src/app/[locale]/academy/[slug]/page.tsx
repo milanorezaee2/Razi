@@ -12,6 +12,7 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Reveal } from "@/components/ui/Reveal";
 import { CourseProgressSidebar } from "@/components/academy/CourseProgressSidebar";
 import { EnrollForm } from "@/components/academy/EnrollForm";
+import { StickyBuyBar } from "@/components/product/StickyBuyBar";
 import { VideoGrid, type AcademyVideoEntry } from "@/components/academy/VideoGrid";
 import { academyOverview } from "@/lib/data/academy";
 import { isPublishedEducation, publicEducationItems } from "@/lib/academy/publication";
@@ -280,7 +281,7 @@ export default async function EducationDetail({ params }: Props) {
               )}
 
               {/* Real registration — stored in the academy panel */}
-              <div id="enroll">
+              <div id="enroll" className="scroll-mt-28">
                 <EnrollForm
                   item={{
                     slug: e.slug,
@@ -292,6 +293,25 @@ export default async function EducationDetail({ params }: Props) {
                   compact
                 />
               </div>
+
+              {/* Mobile sticky enroll bar (jumps to the form above) */}
+              <StickyBuyBar
+                watchId="enroll"
+                revealAfter={480}
+                caption={t(e.title, locale)}
+                price={isFreePrice(e.price) ? (locale === "fa" ? "رایگان" : "Free") : formatPrice(e.price!, locale)}
+              >
+                <a
+                  href="#enroll"
+                  className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-transform duration-200 active:scale-[0.98]"
+                >
+                  {e.type === "course"
+                    ? isFreePrice(e.price)
+                      ? locale === "fa" ? "شروع رایگان دوره" : "Start free"
+                      : locale === "fa" ? "ثبت‌نام در دوره" : "Enroll in course"
+                    : locale === "fa" ? "رزرو صندلی" : "Reserve a seat"}
+                </a>
+              </StickyBuyBar>
 
               {stats?.capacity ? (
                 <p className="text-caption text-foreground-secondary tabular">

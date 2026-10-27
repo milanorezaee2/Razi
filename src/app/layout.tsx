@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
-import { dirOf, type Locale } from "@/lib/i18n/types";
+import { LOCALES, dirOf, type Locale } from "@/lib/i18n/types";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -20,7 +21,14 @@ export default async function RootLayout({
   params,
 }: Readonly<{ children: React.ReactNode; params: Promise<{ locale?: string }> }>) {
   const { locale } = await params;
-  const lang = (locale as Locale) ?? "fa";
+  const headerLocale = (await headers()).get("x-locale") ?? undefined;
+  const lang = (
+    LOCALES.includes(headerLocale as Locale)
+      ? headerLocale
+      : LOCALES.includes(locale as Locale)
+        ? locale
+        : "fa"
+  ) as Locale;
   const dir = dirOf(lang);
 
   return (

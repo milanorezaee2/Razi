@@ -879,7 +879,7 @@ export function ArtistDashboardView({ locale, data }: { locale: Locale; data: Ar
             <button
               type="button"
               onClick={() => { setServiceModalOpen(false); setEditingService(null); }}
-              className="absolute top-4 inset-inline-end-4 flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-foreground hover:bg-border"
+              className="absolute top-4 end-4 flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-foreground hover:bg-border"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1041,7 +1041,7 @@ export function ArtistDashboardView({ locale, data }: { locale: Locale; data: Ar
             <button
               type="button"
               onClick={() => setSubModalOpen(false)}
-              className="absolute top-4 inset-inline-end-4 flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-foreground hover:bg-border"
+              className="absolute top-4 end-4 flex h-8 w-8 items-center justify-center rounded-full bg-background-secondary text-foreground hover:bg-border"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1071,7 +1071,7 @@ export function ArtistDashboardView({ locale, data }: { locale: Locale; data: Ar
                 <div className="grid gap-4 sm:grid-cols-2">
                   {/* Pro Plan Card */}
                   <div className="relative flex flex-col justify-between rounded-2xl border-2 border-accent bg-accent/5 p-4">
-                    <div className="absolute -top-2.5 inset-inline-end-3">
+                    <div className="absolute -top-2.5 end-3">
                       <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">
                         {fa ? "پیشنهاد ما" : "Recommended"}
                       </span>

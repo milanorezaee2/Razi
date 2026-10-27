@@ -190,7 +190,7 @@ function Panel({
           <button
             onClick={onClose}
             aria-label="close"
-            className="absolute top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full glass text-foreground hover:bg-surface transition-colors inset-inline-end-3"
+            className="absolute top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full glass text-foreground hover:bg-surface transition-colors end-3"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -252,7 +252,7 @@ function ProductPanel({
         {/* colour thumbnails */}
         {colors.length > 1 && (
           <div
-            className="absolute bottom-3 inset-inline-start-3 flex gap-1.5"
+            className="absolute bottom-3 start-3 flex gap-1.5"
             style={{ animation: "ra-hc-stagger 380ms 280ms var(--ease-out) both" }}
           >
             {colors.slice(0, 5).map((c) => (
@@ -273,7 +273,7 @@ function ProductPanel({
 
         {/* badges */}
         <div
-          className="absolute top-3 inset-inline-start-3 flex flex-wrap gap-1"
+          className="absolute top-3 start-3 flex flex-wrap gap-1"
           style={{ animation: "ra-hc-stagger 380ms 60ms var(--ease-out) both" }}
         >
           {!p.artistId ? <Badge tone="accent">{dict.common.siteExclusive}</Badge> : <Badge tone="blue">{dict.common.artistProduct}</Badge>}
@@ -403,7 +403,7 @@ function PatternPanel({
         {/* colourway mini-previews like Spoonflower */}
         {colorways.length > 1 && (
           <div
-            className="absolute bottom-3 inset-inline-start-3 flex gap-1.5"
+            className="absolute bottom-3 start-3 flex gap-1.5"
             style={{ animation: "ra-hc-stagger 380ms 280ms var(--ease-out) both" }}
             onClick={(e) => e.preventDefault()}
           >
@@ -430,7 +430,7 @@ function PatternPanel({
         )}
 
         <div
-          className="absolute top-3 inset-inline-start-3 flex flex-wrap gap-1"
+          className="absolute top-3 start-3 flex flex-wrap gap-1"
           style={{ animation: "ra-hc-stagger 380ms 60ms var(--ease-out) both" }}
         >
           {p.isNew      && <Badge tone="glass">{dict.common.new}</Badge>}

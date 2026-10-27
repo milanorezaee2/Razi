@@ -40,7 +40,8 @@ export default async function PatternPage({ params }: Props) {
   const d = dictionaries[locale];
   const p = enrichPattern(site, raw);
   const related = site.patterns
-    .filter((x) => x.id !== p.id && (x.categoryId === p.categoryId || x.artistId === p.artistId))
+    .filter((x) => x.id !== p.id)
+    .sort((a, b) => Number(b.categoryId === p.categoryId || b.artistId === p.artistId) - Number(a.categoryId === p.categoryId || a.artistId === p.artistId))
     .slice(0, 4)
     .map((x) => enrichPattern(site, x));
   const products = site.products.filter((x) => x.patternId === p.id).map((x) => enrichProduct(site, x));
@@ -81,6 +82,7 @@ export default async function PatternPage({ params }: Props) {
         </section>
       )}
 
+      {related.length > 0 && (
       <section className="container-x section-y">
         <SectionHeader eyebrow={d.nav.patterns} title={d.common.relatedPatterns} href={href(locale, "/patterns")} hrefLabel={d.nav.viewAll} />
         <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-4">
@@ -97,6 +99,7 @@ export default async function PatternPage({ params }: Props) {
           </Link>
         </div>
       </section>
+      )}
     </article>
   );
 }

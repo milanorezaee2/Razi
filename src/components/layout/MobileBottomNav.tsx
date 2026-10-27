@@ -34,7 +34,9 @@ export function MobileBottomNav() {
       href(locale, "/checkout/return"),
       href(locale, "/checkout/sandbox"),
     ].some((route) => pathname === route || pathname.startsWith(`${route}/`)) ||
-    /\/academy\/[^/]+\/(?:live|broadcast)\/?$/.test(pathname);
+    /\/academy\/[^/]+\/(?:live|broadcast)\/?$/.test(pathname) ||
+    // Detail pages get the sticky buy bar instead of the tab bar.
+    /\/(?:patterns|shop|academy)\/[^/]+\/?$/.test(pathname);
 
   if (hiddenRoute) return null;
 

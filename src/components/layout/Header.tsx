@@ -242,7 +242,7 @@ export function Header({ nav }: { nav: NavData }) {
 
             <button type="button" onClick={openCart} aria-label={dict.nav.cart} className={cn("relative flex h-10 w-10 items-center justify-center rounded-md transition-colors", transparent ? "text-white hover:bg-white/10" : "text-foreground hover:bg-background-secondary")}>
               <ShoppingBag className="h-[18px] w-[18px]" />
-              {count > 0 && <span className="absolute top-1.5 inset-inline-end-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white tabular anim-scale-fade">{count}</span>}
+              {count > 0 && <span className="absolute top-1.5 end-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white tabular anim-scale-fade">{count}</span>}
             </button>
 
             <Link href={href(locale, "/creators/join")} className={cn("hidden lg:inline-flex h-10 items-center rounded-md px-4 text-[13px] font-semibold transition-[background-color,transform] hover:-translate-y-px ms-1", transparent ? "bg-white text-foreground hover:bg-white/90" : "bg-foreground text-background hover:bg-primary")}>

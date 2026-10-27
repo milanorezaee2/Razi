@@ -1,11 +1,12 @@
 "use client";
 
 import { Heart, Minus, Plus } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useFavorites, useLocale } from "@/components/providers/AppProviders";
 import { Gallery } from "./Gallery";
 import { ColorSwatches } from "./ColorSwatches";
 import { AddToCartButton } from "./Actions";
+import { StickyBuyBar } from "./StickyBuyBar";
 import { cn, formatPrice, href, t } from "@/lib/utils";
 import type { ProductCardData } from "@/components/cards/ProductCard";
 import { getProductColor, getProductColors, hasProductVariants, isProductVariantPurchasable } from "@/lib/product-variants";
@@ -25,8 +26,11 @@ export function ProductBuyBox({ product, children }: { product: ProductCardData;
   const fav = has(product.id);
   const gallery = [color.image, ...colors.filter((c) => c.id !== color.id).map((c) => c.image)];
   const sizeLabel = t(product.sizes[size], locale);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const line = { kind: "product" as const, id: product.id, sku: product.sku, title: `${t(product.title, locale)}${sizeLabel ? ` · ${sizeLabel}` : ""}`, image: color.image, price: product.price, colorName: t(color.name, locale), colorHex: color.hex, href: href(locale, `/shop/${product.slug}`), qty };
 
   return (
+    <>
     <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
       <div className="lg:col-span-7"><Gallery key={color.id} images={gallery} alt={`${t(product.title, locale)} — ${t(color.name, locale)}`} ratio="aspect-square md:aspect-[4/5]" /></div>
       <div className="lg:col-span-5">
@@ -71,8 +75,8 @@ export function ProductBuyBox({ product, children }: { product: ProductCardData;
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <AddToCartButton variant="wide" disabled={!canBuy} line={{ kind: "product", id: product.id, sku: product.sku, title: `${t(product.title, locale)}${sizeLabel ? ` · ${sizeLabel}` : ""}`, image: color.image, price: product.price, colorName: t(color.name, locale), colorHex: color.hex, href: href(locale, `/shop/${product.slug}`), qty }} />
+            <div ref={ctaRef} className="flex items-center gap-2">
+              <AddToCartButton variant="wide" disabled={!canBuy} line={line} />
               <button type="button" aria-pressed={fav} aria-label={dict.common.favorite} onClick={() => toggle(product.id)} className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-md border transition-colors", fav ? "border-accent text-accent" : "border-border hover:border-foreground")}>
                 <Heart className={cn("h-5 w-5", fav && "fill-current")} />
               </button>
@@ -81,5 +85,13 @@ export function ProductBuyBox({ product, children }: { product: ProductCardData;
         </div>
       </div>
     </div>
+    <StickyBuyBar
+      watchRef={ctaRef}
+      caption={out ? dict.common.outOfStock : `${t(color.name, locale)}${sizeLabel ? ` · ${sizeLabel}` : ""}`}
+      price={formatPrice(product.price, locale)}
+    >
+      <AddToCartButton variant="wide" disabled={!canBuy} line={line} className="w-auto min-w-0 flex-1 rounded-full" />
+    </StickyBuyBar>
+    </>
   );
 }

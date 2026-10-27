@@ -1,11 +1,12 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFavorites, useLocale } from "@/components/providers/AppProviders";
 import { cn, formatPrice, href, t } from "@/lib/utils";
 import type { PatternCardData } from "@/components/cards/PatternCard";
 import { AddToCartButton } from "./Actions";
+import { StickyBuyBar } from "./StickyBuyBar";
 import { ColorwayDots, resolveColorways } from "./ColorwayDots";
 import Image from "@/components/ui/SiteImage";
 
@@ -40,8 +41,22 @@ export function PatternBuyBox({
   const price = { fa: Math.round((pattern.price.fa * lic.mult) / 10000) * 10000, en: Math.round(pattern.price.en * lic.mult) };
   const fav = has(pattern.id);
   const image = activeCw?.image || pattern.image;
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const licenseName = locale === "fa" ? lic.fa : lic.en;
+  const line = {
+    kind: "pattern" as const,
+    id: pattern.id,
+    sku: pattern.sku,
+    title: `${t(pattern.title, locale)} — ${activeCw ? t(activeCw.name, locale) : ""} · ${licenseName}`,
+    image,
+    price,
+    href: href(locale, `/patterns/${pattern.slug}`),
+    colorName: activeCw ? t(activeCw.name, locale) : licenseName,
+    colorHex: activeCw?.hex,
+  };
 
   return (
+    <>
     <div className="mt-6">
       {!hideColorwayPicker && colorways.length > 0 && (
         <div className="mb-6">
@@ -92,25 +107,20 @@ export function PatternBuyBox({
       <div className="mt-5 flex items-center gap-3">
         <span className="text-h2 font-semibold tabular">{formatPrice(price, locale)}</span>
       </div>
-      <div className="mt-4 flex items-center gap-2">
-        <AddToCartButton
-          variant="wide"
-          line={{
-            kind: "pattern",
-            id: pattern.id,
-            sku: pattern.sku,
-            title: `${t(pattern.title, locale)} — ${activeCw ? t(activeCw.name, locale) : ""} · ${locale === "fa" ? lic.fa : lic.en}`,
-            image,
-            price,
-            href: href(locale, `/patterns/${pattern.slug}`),
-            colorName: activeCw ? t(activeCw.name, locale) : locale === "fa" ? lic.fa : lic.en,
-            colorHex: activeCw?.hex,
-          }}
-        />
+      <div ref={ctaRef} className="mt-4 flex items-center gap-2">
+        <AddToCartButton variant="wide" line={line} />
         <button type="button" aria-pressed={fav} aria-label={dict.common.favorite} onClick={() => toggle(pattern.id)} className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-md border transition-colors", fav ? "border-accent text-accent" : "border-border hover:border-foreground")}>
           <Heart className={cn("h-5 w-5", fav && "fill-current")} />
         </button>
       </div>
     </div>
+    <StickyBuyBar
+      watchRef={ctaRef}
+      caption={`${licenseName}${activeCw ? ` · ${t(activeCw.name, locale)}` : ""}`}
+      price={formatPrice(price, locale)}
+    >
+      <AddToCartButton variant="wide" line={line} className="w-auto min-w-0 flex-1 rounded-full" />
+    </StickyBuyBar>
+    </>
   );
 }

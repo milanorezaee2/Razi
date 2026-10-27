@@ -161,7 +161,7 @@ export function ProfileTabs({
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                        <div className="absolute top-3 inset-inline-start-3">
+                        <div className="absolute top-3 start-3">
                           <span className="rounded-full bg-accent/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur-sm">
                             {t(
                               service.categoryLabel ?? {
@@ -174,7 +174,7 @@ export function ProfileTabs({
                         </div>
 
                         {service.deliveryTime && (
-                          <div className="absolute bottom-3 inset-inline-start-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white backdrop-blur-sm">
+                          <div className="absolute bottom-3 start-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-white backdrop-blur-sm">
                             <Clock className="h-3 w-3 text-accent" />
                             <span>{t(service.deliveryTime, locale)}</span>
                           </div>

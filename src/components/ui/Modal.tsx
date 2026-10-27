@@ -40,14 +40,14 @@ export function Modal({ open, onClose, children, className, label, variant = "ce
         className={cn(
           "absolute bg-surface shadow-elevated",
           variant === "center" && "inset-x-4 top-1/2 mx-auto max-h-[88vh] w-auto max-w-4xl -translate-y-1/2 overflow-auto rounded-xl anim-scale-fade md:inset-x-8",
-          variant === "drawer" && "inset-y-0 inset-inline-end-0 h-full w-full max-w-md overflow-auto animate-[ra-drawer_360ms_var(--ease-out)_both]",
+          variant === "drawer" && "inset-y-0 end-0 h-full w-full max-w-md overflow-auto animate-[ra-drawer_360ms_var(--ease-out)_both]",
           className,
         )}
       >
         <button
           onClick={onClose}
           aria-label="close"
-          className="absolute top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full glass text-foreground hover:bg-surface inset-inline-end-3"
+          className="absolute top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full glass text-foreground hover:bg-surface end-3"
         >
           <X className="h-4 w-4" />
         </button>

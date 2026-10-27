@@ -3215,10 +3215,31 @@ html[lang="fa"] .pf-hero-title span {
   }
 }
 
+/* Phase 6: detail-page sticky buy bar clearance + iOS input zoom guard. */
+@media (max-width: 1023.98px) {
+  body:has(.sticky-buybar) .public-app-shell {
+    padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
+  }
+
+  body:has(.sticky-buybar) .mobile-support {
+    bottom: calc(5.35rem + env(safe-area-inset-bottom));
+  }
+
+  .public-app-shell input,
+  .public-app-shell select,
+  .public-app-shell textarea {
+    font-size: 16px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mobile-tabbar__item,
   .mobile-tabbar__icon,
   .mobile-category-card {
+    transition: none;
+  }
+
+  .sticky-buybar {
     transition: none;
   }
 }
